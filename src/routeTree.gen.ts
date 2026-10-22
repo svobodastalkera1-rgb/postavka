@@ -10,33 +10,193 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AiSearchRouteImport } from './routes/ai-search'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlacklistRouteImport } from './routes/blacklist'
+import { Route as CompareRouteImport } from './routes/compare'
+import { Route as DiscoveryRouteImport } from './routes/discovery'
+import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LuckyRouteImport } from './routes/lucky'
+import { Route as SuppliersIndexRouteImport } from './routes/suppliers.index'
+import { Route as SuppliersIdRouteImport } from './routes/suppliers.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AiSearchRoute = AiSearchRouteImport.update({
+  id: '/ai-search',
+  path: '/ai-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlacklistRoute = BlacklistRouteImport.update({
+  id: '/blacklist',
+  path: '/blacklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoveryRoute = DiscoveryRouteImport.update({
+  id: '/discovery',
+  path: '/discovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LuckyRoute = LuckyRouteImport.update({
+  id: '/lucky',
+  path: '/lucky',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersIndexRoute = SuppliersIndexRouteImport.update({
+  id: '/suppliers/',
+  path: '/suppliers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersIdRoute = SuppliersIdRouteImport.update({
+  id: '/suppliers/$id',
+  path: '/suppliers/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/ai-search': typeof AiSearchRoute
+  '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
+  '/blacklist': typeof BlacklistRoute
+  '/compare': typeof CompareRoute
+  '/discovery': typeof DiscoveryRoute
+  '/favorites': typeof FavoritesRoute
+  '/history': typeof HistoryRoute
+  '/lucky': typeof LuckyRoute
+  '/suppliers/$id': typeof SuppliersIdRoute
+  '/suppliers/': typeof SuppliersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/ai-search': typeof AiSearchRoute
+  '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
+  '/blacklist': typeof BlacklistRoute
+  '/compare': typeof CompareRoute
+  '/discovery': typeof DiscoveryRoute
+  '/favorites': typeof FavoritesRoute
+  '/history': typeof HistoryRoute
+  '/lucky': typeof LuckyRoute
+  '/suppliers/$id': typeof SuppliersIdRoute
+  '/suppliers': typeof SuppliersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/ai-search': typeof AiSearchRoute
+  '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
+  '/blacklist': typeof BlacklistRoute
+  '/compare': typeof CompareRoute
+  '/discovery': typeof DiscoveryRoute
+  '/favorites': typeof FavoritesRoute
+  '/history': typeof HistoryRoute
+  '/lucky': typeof LuckyRoute
+  '/suppliers/$id': typeof SuppliersIdRoute
+  '/suppliers/': typeof SuppliersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/ai-search'
+    | '/analytics'
+    | '/auth'
+    | '/blacklist'
+    | '/compare'
+    | '/discovery'
+    | '/favorites'
+    | '/history'
+    | '/lucky'
+    | '/suppliers/$id'
+    | '/suppliers/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin'
+    | '/ai-search'
+    | '/analytics'
+    | '/auth'
+    | '/blacklist'
+    | '/compare'
+    | '/discovery'
+    | '/favorites'
+    | '/history'
+    | '/lucky'
+    | '/suppliers/$id'
+    | '/suppliers'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/ai-search'
+    | '/analytics'
+    | '/auth'
+    | '/blacklist'
+    | '/compare'
+    | '/discovery'
+    | '/favorites'
+    | '/history'
+    | '/lucky'
+    | '/suppliers/$id'
+    | '/suppliers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AiSearchRoute: typeof AiSearchRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  AuthRoute: typeof AuthRoute
+  BlacklistRoute: typeof BlacklistRoute
+  CompareRoute: typeof CompareRoute
+  DiscoveryRoute: typeof DiscoveryRoute
+  FavoritesRoute: typeof FavoritesRoute
+  HistoryRoute: typeof HistoryRoute
+  LuckyRoute: typeof LuckyRoute
+  SuppliersIdRoute: typeof SuppliersIdRoute
+  SuppliersIndexRoute: typeof SuppliersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +208,107 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ai-search': {
+      id: '/ai-search'
+      path: '/ai-search'
+      fullPath: '/ai-search'
+      preLoaderRoute: typeof AiSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blacklist': {
+      id: '/blacklist'
+      path: '/blacklist'
+      fullPath: '/blacklist'
+      preLoaderRoute: typeof BlacklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discovery': {
+      id: '/discovery'
+      path: '/discovery'
+      fullPath: '/discovery'
+      preLoaderRoute: typeof DiscoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lucky': {
+      id: '/lucky'
+      path: '/lucky'
+      fullPath: '/lucky'
+      preLoaderRoute: typeof LuckyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers/': {
+      id: '/suppliers/'
+      path: '/suppliers'
+      fullPath: '/suppliers/'
+      preLoaderRoute: typeof SuppliersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers/$id': {
+      id: '/suppliers/$id'
+      path: '/suppliers/$id'
+      fullPath: '/suppliers/$id'
+      preLoaderRoute: typeof SuppliersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AiSearchRoute: AiSearchRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  AuthRoute: AuthRoute,
+  BlacklistRoute: BlacklistRoute,
+  CompareRoute: CompareRoute,
+  DiscoveryRoute: DiscoveryRoute,
+  FavoritesRoute: FavoritesRoute,
+  HistoryRoute: HistoryRoute,
+  LuckyRoute: LuckyRoute,
+  SuppliersIdRoute: SuppliersIdRoute,
+  SuppliersIndexRoute: SuppliersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
