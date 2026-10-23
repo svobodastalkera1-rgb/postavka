@@ -12,7 +12,7 @@ export function SupplierEditor({ supplier, open, onOpenChange, onSaved }: { supp
   const [form, setForm] = useState(supplier);
   useEffect(() => { if (open) setForm(supplier); }, [open, supplier]);
   const field = (key: keyof Supplier, label: string) => <div className="grid gap-1.5"><Label>{label}</Label><Input value={String(form[key] ?? "")} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value || null }))} /></div>;
-  const list = (key: "regions" | "categories" | "assortment" | "documents", label: string) => <div className="grid gap-1.5"><Label>{label} (по одной строке)</Label><Textarea value={form[key].join("\n")} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean) }))} /></div>;
+  const list = (key: "regions" | "categories" | "assortment" | "documents", label: string) => <div className="grid gap-1.5"><Label>{label} (по одной строке)</Label><Textarea rows={4} className="min-h-28 resize-y" value={form[key].join("\n")} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean) }))} /></div>;
   const contacts = form.contacts.map((c) => [c.name, c.role, c.phone ?? "", c.email ?? ""].join(" | ")).join("\n");
   const prices = form.prices.map((p) => [p.item, p.price, p.unit].join(" | ")).join("\n");
   const save = async () => {
@@ -22,16 +22,17 @@ export function SupplierEditor({ supplier, open, onOpenChange, onSaved }: { supp
       onSaved(updated); onOpenChange(false); toast.success("Карточка сохранена");
     } catch (error) { toast.error((error as Error).message); }
   };
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Редактировать поставщика</DialogTitle></DialogHeader>
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="editor-dialog max-h-[90vh] w-[min(94vw,56rem)] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>Редактировать поставщика</DialogTitle></DialogHeader>
     <div className="grid gap-3 sm:grid-cols-2">
       {field("name", "Название")}{field("legalName", "Юридическое лицо")}{field("inn", "ИНН")}{field("website", "Сайт")}
       {field("phone", "Телефон")}{field("email", "Email")}{field("address", "Адрес")}{field("city", "Город")}
-      {field("minOrder", "Минимальный заказ")}{field("delivery", "Доставка")}{field("verifiedAt", "Дата актуальности (ГГГГ-ММ-ДД)")}
+      {field("minOrder", "Минимальный заказ")}{field("verifiedAt", "Дата актуальности (ГГГГ-ММ-ДД)")}
     </div>
+    <div className="grid gap-1.5"><Label>Доставка и подробные условия</Label><Textarea rows={5} className="min-h-32 resize-y" value={form.delivery ?? ""} onChange={(e) => setForm((old) => ({ ...old, delivery: e.target.value }))} /></div>
     {list("regions", "Регионы")}{list("categories", "Категории")}{list("assortment", "Ассортимент")}{list("documents", "Документы")}
-    <div className="grid gap-1.5"><Label>Контактные лица (имя | должность | телефон | email)</Label><Textarea value={contacts} onChange={(e) => setForm((old) => ({ ...old, contacts: e.target.value.split("\n").filter((line) => line.trim()).map((line) => { const [name, role, phone, email] = line.split("|").map((part) => part.trim()); return { name: name ?? "", role: role ?? "", phone: phone || null, email: email || null }; }) }))} /></div>
-    <div className="grid gap-1.5"><Label>Цены (товар | цена в ₽ | единица)</Label><Textarea value={prices} onChange={(e) => setForm((old) => ({ ...old, prices: e.target.value.split("\n").filter((line) => line.trim()).map((line) => { const [item, price, unit] = line.split("|").map((part) => part.trim()); return { item: item ?? "", price: Number(price), unit: unit ?? "шт" }; }) }))} /></div>
-    <div className="grid gap-1.5"><Label>Заметки и коммерческие условия</Label><Textarea value={form.notes ?? ""} onChange={(e) => setForm((old) => ({ ...old, notes: e.target.value }))} /></div>
+    <div className="grid gap-1.5"><Label>Контактные лица (имя | должность | телефон | email)</Label><Textarea rows={5} className="min-h-32 resize-y" value={contacts} onChange={(e) => setForm((old) => ({ ...old, contacts: e.target.value.split("\n").filter((line) => line.trim()).map((line) => { const [name, role, phone, email] = line.split("|").map((part) => part.trim()); return { name: name ?? "", role: role ?? "", phone: phone || null, email: email || null }; }) }))} /></div>
+    <div className="grid gap-1.5"><Label>Цены (товар | цена в ₽ | единица)</Label><Textarea rows={5} className="min-h-32 resize-y" value={prices} onChange={(e) => setForm((old) => ({ ...old, prices: e.target.value.split("\n").filter((line) => line.trim()).map((line) => { const [item, price, unit] = line.split("|").map((part) => part.trim()); return { item: item ?? "", price: Number(price), unit: unit ?? "шт" }; }) }))} /></div>
+    <div className="grid gap-1.5"><Label>Заметки и коммерческие условия</Label><Textarea rows={9} className="min-h-52 resize-y" value={form.notes ?? ""} onChange={(e) => setForm((old) => ({ ...old, notes: e.target.value }))} /></div>
     <DialogFooter><Button onClick={save} disabled={!form.name.trim() || !form.city.trim()}>Сохранить</Button></DialogFooter>
   </DialogContent></Dialog>;
 }

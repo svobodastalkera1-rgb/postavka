@@ -147,6 +147,11 @@ body {
   border-color: rgba(173,154,255,.5);
   box-shadow: 0 10px 26px rgba(0,0,0,.18);
 }
+* { scrollbar-width: thin; scrollbar-color: rgba(173,154,255,.65) rgba(12,16,28,.35); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(12,16,28,.35); }
+::-webkit-scrollbar-thumb { border: 2px solid rgba(12,16,28,.55); border-radius: 999px; background: rgba(173,154,255,.65); }
+::-webkit-scrollbar-thumb:hover { background: rgba(54,215,255,.75); }
 h1, h2, h3 { letter-spacing: -.025em; }
 button, a, input, textarea { transition-duration: .2s; }
 :focus-visible { outline: 2px solid #36d7ff; outline-offset: 3px; }
