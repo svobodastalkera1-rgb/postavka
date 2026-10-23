@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
         <div className="flex items-center gap-3 border-b bg-warning-soft px-4 py-1.5 text-xs text-warning">
           <button className="lg:hidden" onClick={() => setOpen(true)} aria-label="Открыть меню"><Menu className="size-4" /></button>
-          Начальный каталог содержит вымышленные компании. Добавленные вами карточки и изменения сохраняются на сервере.
+          Сведения собраны из открытых источников и могут устареть. Условия и надёжность подтвердите перед закупкой.
         </div>
         <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-8">{children}</main>
       </div>

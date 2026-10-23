@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Поставка API
-  version: 0.2.0
+  version: 0.3.0
   description: API прототипа. Совместимость с конкретной конфигурацией 1С не подтверждена.
 servers:
   - url: /api
@@ -31,6 +31,20 @@ components:
         contacts: { type: array, items: { type: object }, description: Скрыто для анонимных запросов }
         prices: { type: array, items: { type: object }, description: Скрыто для анонимных запросов }
 paths:
+  /catalog/import:
+    post:
+      summary: Повторяемый импорт проверенного перечня компаний без перезаписи существующих карточек
+      security: [{ employeeSession: [] }]
+      responses:
+        '200': { description: Число добавленных и пропущенных карточек }
+        '401': { description: Требуется вход сотрудника }
+  /events:
+    get:
+      summary: Общая лента изменений и взаимодействий
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      responses:
+        '200': { description: До 100 последних событий }
+        '401': { description: Нет прав на чтение }
   /suppliers:
     get:
       summary: Список карточек и изменённых записей

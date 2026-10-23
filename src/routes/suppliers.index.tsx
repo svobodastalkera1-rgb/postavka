@@ -7,12 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { CATEGORIES, PIPELINE, STATUS_LABELS, SUPPLIERS, totalScore } from "@/lib/fixtures";
+import { CATEGORIES, PIPELINE, STATUS_LABELS, totalScore } from "@/lib/fixtures";
 import { Flags, NoData, PageHeader, ScorePill, StatusBadge, SupplierLink } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
-import { Plus, Bookmark, Columns3, Star } from "lucide-react";
+import { Plus, Database, Columns3, Star } from "lucide-react";
 import { toast } from "sonner";
-import { createSupplier, suppliers } from "@/lib/api-client";
+import { createSupplier, request, suppliers } from "@/lib/api-client";
 import type { Supplier } from "@/lib/fixtures";
 
 export const Route = createFileRoute("/suppliers/")({
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/suppliers/")({
 const ALL = "all";
 
 export function Directory() {
-  const [items, setItems] = useState<Supplier[]>(SUPPLIERS);
+  const [items, setItems] = useState<Supplier[]>([]);
   useEffect(() => { suppliers().then((data) => setItems(data.items)).catch((error) => toast.error(error.message)); }, []);
   const [view, setView] = useState("all");
   const [q, setQ] = useState("");
@@ -49,12 +49,19 @@ export function Directory() {
   }, [items, q, group, status, city, region, delivery, verified, hideBl, sort, view]);
 
   const toggle = (id: string) => setSel((p) => p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p);
+  const importVerified = async () => {
+    try {
+      const result = await request<{ added: number }>("/catalog/import", { method: "POST" });
+      setItems((await suppliers()).items);
+      toast.success(result.added ? `Добавлено компаний: ${result.added}` : "Каталог уже загружен");
+    } catch (error) { toast.error((error as Error).message); }
+  };
 
   return (
     <>
       <PageHeader title="Каталог поставщиков" description="Поиск только по внутренней базе"
         actions={<>
-          <Button variant="outline" onClick={() => toast("Поиск сохранён (демо)")}><Bookmark />Сохранить поиск</Button>
+          <Button variant="outline" onClick={importVerified}><Database />Импортировать каталог</Button>
           <NewSupplierDialog onCreated={(item) => setItems((all) => [item, ...all])} />
         </>} />
       <div className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-4">

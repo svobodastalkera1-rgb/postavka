@@ -25,7 +25,7 @@ function Auth() {
         <div className="font-semibold text-sidebar-accent-foreground">Поставка</div>
         <div><h1 className="text-3xl font-semibold leading-tight text-sidebar-accent-foreground">Поставка — сервис поиска и сравнения поставщиков</h1>
           <p className="mt-4 max-w-md text-sm">Единая база, поиск по каталогу и общая история работы с каждым поставщиком.</p></div>
-        <div className="text-xs">Демонстрационная версия · этап 2</div>
+        <div className="text-xs">Демонстрационная версия</div>
       </div>
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-sm"><CardHeader><CardTitle>Добро пожаловать</CardTitle></CardHeader><CardContent>

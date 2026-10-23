@@ -1,5 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { addInteraction, changesFor, findSupplier, interactionsFor, listSuppliers, proposalsFor, resolveProposal, saveSupplier } from "./store.server";
+import { addInteraction, changesFor, findSupplier, importCatalog, interactionsFor, listSuppliers, proposalsFor, recentEvents, resolveProposal, saveSupplier } from "./store.server";
 import { type Supplier } from "./fixtures";
 import { z } from "zod";
 
@@ -76,6 +76,8 @@ export async function api(request: Request): Promise<Response | null> {
       return json({ authenticated: true }, 200, { "Set-Cookie": `postavka_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${url.protocol === "https:" ? "; Secure" : ""}` });
     }
   }
+  if (path[1] === "catalog" && path[2] === "import" && request.method === "POST") return employee(request) ? json(importCatalog()) : unauthorized();
+  if (path[1] === "events" && request.method === "GET") return actor(request) ? json(recentEvents()) : unauthorized();
   if (path[1] !== "suppliers") return json({ error: "Не найдено" }, 404);
   const id = path[2];
   if (request.method === "GET" && !id) {

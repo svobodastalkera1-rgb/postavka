@@ -50,8 +50,19 @@ test("изменения карточки переживают повторно�
 });
 
 test("аноним не может изменять карточку или читать историю взаимодействий", async () => {
-  expect((await call("/suppliers/s1", "PATCH", { status: "active" })).status).toBe(401);
-  expect((await call("/suppliers/s1/interactions")).status).toBe(401);
-  const publicSupplier = await call("/suppliers/s1");
+  expect((await call("/suppliers/cupmaster", "PATCH", { status: "active" })).status).toBe(401);
+  expect((await call("/suppliers/cupmaster/interactions")).status).toBe(401);
+  const publicSupplier = await call("/suppliers/cupmaster");
   expect((await publicSupplier.json() as { contacts: unknown[]; notes: unknown }).contacts).toEqual([]);
+});
+
+test("каталог реальных компаний импортируется повторно без дублей и потери правок", async () => {
+  const first = await call("/catalog/import", "POST", undefined, { cookie });
+  expect((await first.json() as { added: number }).added).toBe(0);
+  const before = await call("/suppliers/cupmaster", "PATCH", { minOrder: "Согласовано по телефону" }, { cookie });
+  expect(before.status).toBe(200);
+  const repeated = await call("/catalog/import", "POST", undefined, { cookie });
+  expect((await repeated.json() as { added: number }).added).toBe(0);
+  const after = await call("/suppliers/cupmaster", "GET", undefined, { cookie });
+  expect((await after.json() as { minOrder: string }).minOrder).toBe("Согласовано по телефону");
 });
