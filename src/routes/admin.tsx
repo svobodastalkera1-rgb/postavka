@@ -1,54 +1,52 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { USERS } from "@/lib/fixtures";
 import { PageHeader } from "@/components/app/ui-bits";
+import { request } from "@/lib/api-client";
 import { meta } from "@/lib/meta";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
-  head: () => meta("Администрирование", "Пользователи, веса оценки, обновление данных и API."),
+  head: () => meta("Настройки", "Сведения о доступных возможностях приложения."),
   component: Admin,
 });
 
-const soon = () => toast("Заработает на этапе 2");
-const WEIGHTS = [["Релевантность ассортимента", 30], ["Логистика", 20], ["Коммерческие условия", 20], ["Надёжность данных", 15], ["История сотрудничества", 15]] as const;
+type Session = { authenticated: boolean; name: string | null };
 
-function Admin() {
-  return (
-    <>
-      <PageHeader title="Администрирование" description="Доступно только администраторам" />
-      <Tabs defaultValue="users">
-        <TabsList><TabsTrigger value="users">Пользователи</TabsTrigger><TabsTrigger value="scoring">Оценка</TabsTrigger><TabsTrigger value="refresh">Обновление данных</TabsTrigger><TabsTrigger value="api">API</TabsTrigger></TabsList>
-        <TabsContent value="users"><Card><CardContent className="pt-6"><Table>
-          <TableHeader><TableRow><TableHead>Имя</TableHead><TableHead>Email</TableHead><TableHead>Роль</TableHead><TableHead>Активность</TableHead></TableRow></TableHeader>
-          <TableBody>{USERS.map((u) => <TableRow key={u.email}><TableCell>{u.name}</TableCell><TableCell>{u.email}</TableCell>
-            <TableCell><Select defaultValue={u.role} onValueChange={soon}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Админ">Админ</SelectItem><SelectItem value="Пользователь">Пользователь</SelectItem></SelectContent></Select></TableCell>
-            <TableCell>{u.lastSeen}</TableCell></TableRow>)}</TableBody>
-        </Table></CardContent></Card></TabsContent>
-        <TabsContent value="scoring"><Card><CardHeader><CardTitle className="text-base">Веса модели оценки</CardTitle></CardHeader><CardContent className="space-y-5">
-          {WEIGHTS.map(([l, w]) => <div key={l}><div className="mb-2 flex justify-between text-sm"><span>{l}</span><span className="font-mono">{w}%</span></div><Slider defaultValue={[w]} max={50} step={5} /></div>)}
-          <p className="text-xs text-muted-foreground">Если истории сотрудничества нет, её вес распределяется между остальными критериями. Все изменения попадают в журнал.</p>
-          <Button onClick={soon}>Сохранить и пересчитать</Button>
-        </CardContent></Card></TabsContent>
-        <TabsContent value="refresh"><Card><CardContent className="space-y-4 pt-6 text-sm">
-          <div className="flex items-center gap-3">Периодичность: <Select defaultValue="week"><SelectTrigger className="w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="week">Раз в неделю</SelectItem><SelectItem value="month">Раз в месяц</SelectItem><SelectItem value="off">Выключено</SelectItem></SelectContent></Select></div>
-          <div className="rounded-md border p-3">Последнее обновление: <span className="text-muted-foreground italic">Нет данных</span></div>
-          <Button variant="outline" onClick={soon}>Запустить сейчас</Button>
-        </CardContent></Card></TabsContent>
-        <TabsContent value="api"><Card><CardContent className="space-y-3 pt-6 text-sm">
-          <p>REST API для CRM и 1С: поставщики, условия, история, статусы, оценки, инкрементальная выгрузка.</p>
-          <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs">{`GET /api/public/v1/suppliers?updated_since=2026-10-01T00:00:00Z&page=1
-GET /api/public/v1/suppliers/{id}
-GET /api/public/v1/suppliers/{id}/interactions
-Authorization: Bearer <ключ API>`}</pre>
-          <Button variant="outline" onClick={soon}>Создать ключ API</Button>
-        </CardContent></Card></TabsContent>
-      </Tabs>
-    </>
-  );
+export function Admin() {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    request<Session>("/session")
+      .then((value) => { if (active) setSession(value); })
+      .catch(() => { if (active) setSession({ authenticated: false, name: null }); });
+    return () => { active = false; };
+  }, []);
+
+  if (!session) return <p role="status" className="text-sm text-muted-foreground">Проверяем доступ…</p>;
+
+  if (!session.authenticated) {
+    return <>
+      <PageHeader title="Настройки" description="Для просмотра настроек войдите в систему." />
+      <Card><CardContent className="flex flex-wrap gap-3 pt-6">
+        <Button asChild><Link to="/auth">Войти</Link></Button>
+        <Button asChild variant="outline"><Link to="/suppliers">Вернуться в каталог</Link></Button>
+      </CardContent></Card>
+    </>;
+  }
+
+  return <>
+    <PageHeader title="Настройки" description={`Вы вошли как ${session.name ?? "сотрудник"}.`} />
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card><CardHeader><CardTitle className="text-base">Доступ сотрудников</CardTitle></CardHeader><CardContent className="space-y-2 text-sm text-muted-foreground">
+        <p>Сейчас в демонстрационной версии используется общий пароль редактора. Отдельные учётные записи и управление ролями ещё не реализованы.</p>
+        <p>Имя при входе указывает сам сотрудник; оно не подтверждает его личность.</p>
+      </CardContent></Card>
+      <Card><CardHeader><CardTitle className="text-base">Интеграции</CardTitle></CardHeader><CardContent className="space-y-2 text-sm text-muted-foreground">
+        <p>Карточки поставщиков доступны через REST API приложения. Отдельные ключи для внешних систем и управление ими ещё не реализованы.</p>
+        <Button asChild variant="outline" size="sm"><a href="/openapi.yaml" target="_blank" rel="noreferrer">Открыть OpenAPI</a></Button>
+      </CardContent></Card>
+    </div>
+  </>;
 }
