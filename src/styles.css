@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Consolas", ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -54,46 +54,46 @@
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.982 0.003 230);
-  --foreground: oklch(0.22 0.02 245);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 245);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 245);
-  --primary: oklch(0.47 0.1 185);
-  --primary-foreground: oklch(0.99 0 0);
-  --primary-soft: oklch(0.95 0.03 185);
-  --secondary: oklch(0.955 0.005 240);
-  --secondary-foreground: oklch(0.28 0.02 245);
-  --muted: oklch(0.96 0.004 240);
-  --muted-foreground: oklch(0.52 0.02 245);
-  --accent: oklch(0.95 0.02 185);
-  --accent-foreground: oklch(0.32 0.07 185);
-  --destructive: oklch(0.56 0.2 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.55 0.13 150);
-  --success-soft: oklch(0.95 0.04 150);
-  --warning: oklch(0.62 0.14 70);
-  --warning-soft: oklch(0.96 0.05 85);
-  --danger-soft: oklch(0.95 0.03 27);
-  --diff: oklch(0.97 0.05 95);
-  --border: oklch(0.91 0.006 240);
-  --input: oklch(0.89 0.008 240);
-  --ring: oklch(0.47 0.1 185);
-  --chart-1: oklch(0.47 0.1 185);
-  --chart-2: oklch(0.65 0.12 70);
-  --chart-3: oklch(0.55 0.08 245);
-  --chart-4: oklch(0.7 0.1 150);
-  --chart-5: oklch(0.6 0.15 27);
-  --sidebar: oklch(0.21 0.02 245);
-  --sidebar-foreground: oklch(0.86 0.01 240);
-  --sidebar-primary: oklch(0.72 0.11 185);
-  --sidebar-primary-foreground: oklch(0.18 0.02 245);
-  --sidebar-accent: oklch(0.28 0.025 245);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.3 0.02 245);
-  --sidebar-ring: oklch(0.72 0.11 185);
+  --radius: 0.75rem;
+  --background: #070910;
+  --foreground: #f4f7ff;
+  --card: #101522;
+  --card-foreground: #f4f7ff;
+  --popover: #161c2c;
+  --popover-foreground: #f4f7ff;
+  --primary: #ad9aff;
+  --primary-foreground: #100b25;
+  --primary-soft: #241d40;
+  --secondary: #1c2334;
+  --secondary-foreground: #f4f7ff;
+  --muted: #171e2d;
+  --muted-foreground: #9aa7bf;
+  --accent: #292341;
+  --accent-foreground: #f4f7ff;
+  --destructive: #ff8d9a;
+  --destructive-foreground: #270b10;
+  --success: #8effc1;
+  --success-soft: #15352b;
+  --warning: #ffd18a;
+  --warning-soft: #302719;
+  --danger-soft: #361d29;
+  --diff: #27223d;
+  --border: rgba(255,255,255,.12);
+  --input: rgba(255,255,255,.2);
+  --ring: #36d7ff;
+  --chart-1: #8b6cff;
+  --chart-2: #36d7ff;
+  --chart-3: #8effc1;
+  --chart-4: #ffd18a;
+  --chart-5: #ff8d9a;
+  --sidebar: #0d111b;
+  --sidebar-foreground: #9aa7bf;
+  --sidebar-primary: #36d7ff;
+  --sidebar-primary-foreground: #070910;
+  --sidebar-accent: #27213e;
+  --sidebar-accent-foreground: #f4f7ff;
+  --sidebar-border: rgba(255,255,255,.12);
+  --sidebar-ring: #36d7ff;
 }
 
 @layer base {
@@ -106,4 +106,13 @@
     font-family: var(--font-sans);
     font-feature-settings: "tnum";
   }
+}
+
+body { min-width: 320px; background-image: radial-gradient(ellipse at 80% 0%, rgba(139,108,255,.10), transparent 50%); }
+h1, h2, h3 { letter-spacing: -.025em; }
+button, a, input, textarea { transition-duration: .2s; }
+:focus-visible { outline: 2px solid #36d7ff; outline-offset: 3px; }
+::selection { background: rgba(139,108,255,.35); color: white; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }

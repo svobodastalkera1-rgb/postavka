@@ -14,13 +14,14 @@ import { Plus, Bookmark, Columns3, Star } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/suppliers/")({
-  head: () => meta("Справочник поставщиков", "Поиск и фильтрация поставщиков во внутренней базе."),
+  head: () => meta("Каталог поставщиков", "Поиск и фильтрация поставщиков во внутренней базе."),
   component: Directory,
 });
 
 const ALL = "all";
 
-function Directory() {
+export function Directory() {
+  const [view, setView] = useState("all");
   const [q, setQ] = useState("");
   const [group, setGroup] = useState(ALL);
   const [status, setStatus] = useState(ALL);
@@ -37,21 +38,22 @@ function Directory() {
     return SUPPLIERS.filter((s) =>
       (!t || [s.name, ...s.assortment, ...s.categories].join(" ").toLowerCase().includes(t)) &&
       (group === ALL || s.group === group) && (status === ALL || s.status === status) && (city === ALL || s.city === city) &&
-      (!delivery || s.hasDelivery) && (!verified || s.verified) && (!hideBl || !s.blacklisted),
+      (view !== "favorites" || s.favorite) && (view !== "blacklist" || s.blacklisted) && (!delivery || s.hasDelivery) && (!verified || s.verified) && (view === "blacklist" || !hideBl || !s.blacklisted),
     ).sort((a, b) => sort === "score" ? totalScore(b) - totalScore(a) : sort === "name" ? a.name.localeCompare(b.name) : b.discoveredAt.localeCompare(a.discoveredAt));
-  }, [q, group, status, city, delivery, verified, hideBl, sort]);
+  }, [q, group, status, city, delivery, verified, hideBl, sort, view]);
 
   const toggle = (id: string) => setSel((p) => p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p);
 
   return (
     <>
-      <PageHeader title="Справочник поставщиков" description="Поиск только по внутренней базе"
+      <PageHeader title="Каталог поставщиков" description="Поиск только по внутренней базе"
         actions={<>
           <Button variant="outline" onClick={() => toast("Поиск сохранён (демо)")}><Bookmark />Сохранить поиск</Button>
           <NewSupplierDialog />
         </>} />
       <div className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-4">
-        <Input placeholder="Название, товар, ключевое слово…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
+        <Select value={view} onValueChange={setView}><SelectTrigger aria-label="Список поставщиков"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Все поставщики</SelectItem><SelectItem value="favorites">Избранное</SelectItem><SelectItem value="blacklist">Чёрный список</SelectItem></SelectContent></Select>
+        <Input aria-label="Поиск по каталогу" placeholder="Название, товар, ключевое слово…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
         <Select value={group} onValueChange={setGroup}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
           <SelectItem value={ALL}>Все категории</SelectItem>
           {Object.entries(CATEGORIES).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}

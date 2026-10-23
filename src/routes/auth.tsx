@@ -18,8 +18,8 @@ function Auth() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden flex-col justify-between bg-sidebar p-12 text-sidebar-foreground lg:flex">
-        <div className="font-semibold text-sidebar-accent-foreground">Supplier Intelligence</div>
-        <div><h1 className="text-3xl font-semibold leading-tight text-sidebar-accent-foreground">Поиск, оценка и управление поставщиками для ЖизньМарт</h1>
+        <div className="font-semibold text-sidebar-accent-foreground">Поставка</div>
+        <div><h1 className="text-3xl font-semibold leading-tight text-sidebar-accent-foreground">Поставка — сервис поиска и сравнения поставщиков</h1>
           <p className="mt-4 max-w-md text-sm">Единая база, интернет-поиск, сравнение и общая история работы с каждым поставщиком.</p></div>
         <div className="text-xs">Демонстрационная версия · этап 1</div>
       </div>
