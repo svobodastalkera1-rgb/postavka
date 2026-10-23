@@ -1,16 +1,15 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { meta } from "@/lib/meta";
 import { useState } from "react";
 import { request } from "@/lib/api-client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
-  head: () => meta("Вход", "Вход и регистрация сотрудников отдела закупок."),
+  head: () => meta("Вход", "Вход сотрудника отдела закупок."),
   component: Auth,
 });
 
@@ -29,7 +28,7 @@ function Auth() {
       </div>
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-sm"><CardHeader><CardTitle>Добро пожаловать</CardTitle></CardHeader><CardContent>
-          <form onSubmit={go} className="grid gap-3"><div className="grid gap-1.5"><Label>Ваше имя</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div><div className="grid gap-1.5"><Label>Пароль редактора</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div><Button type="submit">Войти</Button></form>
+          <form onSubmit={go} className="grid gap-3"><div className="grid gap-1.5"><Label>Ваше имя</Label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div><div className="grid gap-1.5"><Label>Пароль редактора</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div><Button type="submit">Войти</Button><Button asChild variant="outline"><Link to="/suppliers">Продолжить без входа</Link></Button></form>
           <p className="mt-4 text-xs text-muted-foreground">Пароль задаётся владельцем приложения на сервере. Просмотр каталога доступен без входа.</p>
         </CardContent></Card>
       </div>

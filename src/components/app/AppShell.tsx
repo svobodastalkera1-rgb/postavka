@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="text-sidebar-accent-foreground">{user ?? "Гость"}</div>
             <div className="text-sidebar-foreground/70">{user ? "Сотрудник" : "Просмотр"}</div>
           </div>
-          <Link to="/admin" className="text-sidebar-foreground hover:text-sidebar-accent-foreground" aria-label="Настройки"><Settings className="size-4" /></Link>
+          {user && <Link to="/admin" className="text-sidebar-foreground hover:text-sidebar-accent-foreground" aria-label="Настройки"><Settings className="size-4" /></Link>}
           {user ? <button onClick={logout} className="text-sidebar-foreground hover:text-sidebar-accent-foreground" aria-label="Выйти"><LogOut className="size-4" /></button> : <Link to="/auth" className="text-xs text-sidebar-foreground hover:text-sidebar-accent-foreground">Войти</Link>}
         </div>
       </aside>

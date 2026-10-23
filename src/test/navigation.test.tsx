@@ -14,7 +14,8 @@ describe("Навигация закупщика", () => {
     const nav = screen.getByRole("navigation", { name: "Основная навигация" });
     expect(nav.querySelectorAll("a")).toHaveLength(4);
     expect(screen.getByRole("link", { name: "Каталог и поиск" })).toHaveAttribute("href", "/suppliers");
-    expect(screen.getByRole("link", { name: "Настройки" })).toHaveAttribute("href", "/admin");
+    expect(screen.queryByRole("link", { name: "Настройки" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/auth");
     expect(screen.getByText(/сведения собраны из открытых источников/i)).toBeInTheDocument();
     expect(screen.getByText("Поставка")).toBeInTheDocument();
   });
