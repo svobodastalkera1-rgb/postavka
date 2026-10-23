@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,7 +23,8 @@ export function Lucky() {
   const picks = recommend(items, q);
   return (
     <>
-      <PageHeader title="Мне повезёт!" description="Подберём до трёх новых поставщиков. Чёрный список и текущие партнёры исключаются." />
+      <PageHeader title="Мне повезёт!" description="Подберём до трёх новых поставщиков. Чёрный список и текущие партнёры исключаются."
+        actions={<Button variant="outline" asChild><Link to="/suppliers">К каталогу</Link></Button>} />
       <Card><CardContent className="flex flex-col items-center gap-4 py-10">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Например: охлаждённые супы или крафт-пакеты" className="max-w-lg" />
         <Button size="lg" className="h-14 px-10 text-lg" onClick={() => setShown(true)} disabled={!q.trim()}><Clover className="size-5" />Мне повезёт!</Button>

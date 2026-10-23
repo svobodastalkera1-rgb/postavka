@@ -1,13 +1,12 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Building2, Globe, Columns3, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Building2, Columns3, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
 import { request } from "@/lib/api-client";
 
 const NAV = [
   { to: "/", label: "Обзор", icon: LayoutDashboard },
-  { to: "/discovery", label: "Поиск поставщиков", icon: Globe },
-  { to: "/suppliers", label: "Каталог", icon: Building2 },
+  { to: "/suppliers", label: "Каталог и поиск", icon: Building2 },
   { to: "/compare", label: "Сравнение", icon: Columns3 },
   { to: "/analytics", label: "Аналитика", icon: BarChart3 },
 ] as const;

@@ -23,9 +23,9 @@ function Dashboard() {
     <>
       <PageHeader title="Обзор" description="Екатеринбург и Свердловская область"
         actions={<>
-          <Button asChild variant="outline"><Link to="/discovery"><Globe />Поиск по каталогу</Link></Button>
+          <Button asChild variant="outline"><Link to="/suppliers"><Globe />Открыть каталог</Link></Button>
 
-          <Button asChild><Link to="/discovery"><Clover />Подбор поставщиков</Link></Button>
+          <Button asChild><Link to="/lucky"><Clover />Подбор поставщиков</Link></Button>
         </>} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Поставщиков в базе" value={items.length} />
