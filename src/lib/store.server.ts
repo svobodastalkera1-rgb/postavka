@@ -2,7 +2,8 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { SUPPLIERS, type Supplier } from "./fixtures";
+import { type Supplier } from "./fixtures";
+import { CATALOG } from "./catalog";
 import { recalculate } from "./scoring";
 
 export type Change = { id: string; supplierId: string; field: string; before: unknown; after: unknown; author: string; source: string; method: string; confirmation: string; changedAt: string };
@@ -32,10 +33,42 @@ function db() {
   const count = next.prepare("SELECT COUNT(*) AS n FROM suppliers").get() as { n: number };
   if (!count.n) {
     const insert = next.prepare("INSERT INTO suppliers (id,data,updated_at) VALUES (?,?,?)");
-    for (const supplier of SUPPLIERS) insert.run(supplier.id, JSON.stringify(supplier), new Date().toISOString());
+    const provenance = next.prepare("INSERT OR IGNORE INTO field_meta(supplier_id,field,source,method,author,changed_at,confirmation) VALUES(?,?,?,?,?,?,?)");
+    for (const supplier of CATALOG) {
+      insert.run(supplier.id, JSON.stringify(supplier), new Date().toISOString());
+      for (const [field, value] of Object.entries(supplier)) {
+        if (value === null || value === "" || Array.isArray(value) && !value.length) continue;
+        provenance.run(supplier.id, field, "web", "manual research", "Каталог", supplier.discoveredAt, "unconfirmed");
+      }
+    }
   }
   database = next;
   return next;
+}
+
+export function importCatalog(): { added: number; skipped: number } {
+  const current = (db().prepare("SELECT data FROM suppliers").all() as { data: string }[]).map((row) => JSON.parse(row.data) as Supplier);
+  const siteKey = (url: string | null) => { try { return url ? `site:${new URL(url).hostname.replace(/^www\./, "")}` : ""; } catch { return ""; } };
+  const keys = new Set(current.flatMap((item) => [item.inn ? `inn:${item.inn}` : "", siteKey(item.website)].filter(Boolean)));
+  const ids = new Set(current.map((item) => item.id));
+  const insert = db().prepare("INSERT INTO suppliers(id,data,updated_at) VALUES(?,?,?)");
+  const provenance = db().prepare("INSERT OR IGNORE INTO field_meta(supplier_id,field,source,method,author,changed_at,confirmation) VALUES(?,?,?,?,?,?,?)");
+  let added = 0;
+  db().exec("BEGIN IMMEDIATE");
+  try {
+    for (const item of CATALOG) {
+      const itemKeys = [item.inn ? `inn:${item.inn}` : "", siteKey(item.website)].filter(Boolean);
+      if (ids.has(item.id) || itemKeys.some((key) => keys.has(key))) continue;
+      insert.run(item.id, JSON.stringify(item), new Date().toISOString());
+      for (const [field, value] of Object.entries(item)) {
+        if (value === null || value === "" || Array.isArray(value) && !value.length) continue;
+        provenance.run(item.id, field, "web", "manual research", "Каталог", item.discoveredAt, "unconfirmed");
+      }
+      ids.add(item.id); itemKeys.forEach((key) => keys.add(key)); added++;
+    }
+    db().exec("COMMIT");
+  } catch (error) { db().exec("ROLLBACK"); throw error; }
+  return { added, skipped: CATALOG.length - added };
 }
 
 export function listSuppliers(updatedAfter?: string, limit = 50, offset = 0): { items: (Supplier & { updatedAt: string })[]; total: number } {
@@ -115,6 +148,14 @@ export function resolveProposal(id: string, proposalId: string, accept: boolean,
 export function interactionsFor(id: string): Interaction[] {
   const rows = db().prepare("SELECT * FROM interactions WHERE supplier_id=? ORDER BY created_at DESC").all(id) as { id: string; supplier_id: string; type: string; text: string; author: string; created_at: string }[];
   return rows.map((r) => ({ id: r.id, supplierId: r.supplier_id, type: r.type, text: r.text, author: r.author, createdAt: r.created_at }));
+}
+
+export function recentEvents(): { id: string; supplierId: string; type: string; text: string; author: string; date: string }[] {
+  const interactions = db().prepare("SELECT id,supplier_id,type,text,author,created_at FROM interactions ORDER BY created_at DESC LIMIT 100").all() as { id: string; supplier_id: string; type: string; text: string; author: string; created_at: string }[];
+  const changes = db().prepare("SELECT id,supplier_id,field,author,changed_at FROM changes ORDER BY changed_at DESC LIMIT 100").all() as { id: string; supplier_id: string; field: string; author: string; changed_at: string }[];
+  return [...interactions.map((row) => ({ id: row.id, supplierId: row.supplier_id, type: row.type, text: row.text, author: row.author, date: row.created_at })),
+    ...changes.map((row) => ({ id: row.id, supplierId: row.supplier_id, type: "Изменение карточки", text: `Изменено поле «${row.field}»`, author: row.author, date: row.changed_at }))]
+    .sort((a, b) => b.date.localeCompare(a.date)).slice(0, 100);
 }
 
 export function addInteraction(id: string, type: string, text: string, author: string): Interaction {
