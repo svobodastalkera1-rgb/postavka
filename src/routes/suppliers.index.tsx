@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/suppliers/")({
 const ALL = "all";
 
 export function Directory() {
+  const navigate = useNavigate();
   const [items, setItems] = useState<Supplier[]>([]);
   useEffect(() => { suppliers().then((data) => setItems(data.items)).catch((error) => toast.error(error.message)); }, []);
   const [view, setView] = useState("all");
@@ -65,7 +66,7 @@ export function Directory() {
           <Button variant="outline" onClick={importVerified}><Database />Импортировать каталог</Button>
           <NewSupplierDialog onCreated={(item) => setItems((all) => [item, ...all])} />
         </>} />
-      <div className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-4">
+      <div className="glass-card grid gap-3 rounded-lg border p-4 md:grid-cols-4">
         <Select value={view} onValueChange={setView}><SelectTrigger aria-label="Список поставщиков"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Все поставщики</SelectItem><SelectItem value="favorites">Избранное</SelectItem><SelectItem value="blacklist">Чёрный список</SelectItem></SelectContent></Select>
         <Input aria-label="Поиск по каталогу" placeholder="Название, товар, ключевое слово…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
         <Select value={group} onValueChange={setGroup}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
@@ -101,7 +102,7 @@ export function Directory() {
         </div>
       )}
 
-      <div className="mt-4 overflow-x-auto rounded-lg border bg-card">
+      <div className="glass-card mt-4 overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader><TableRow>
             <TableHead className="w-10" /><TableHead>Поставщик</TableHead><TableHead>Категории</TableHead><TableHead>Город</TableHead>
@@ -109,7 +110,10 @@ export function Directory() {
           </TableRow></TableHeader>
           <TableBody>
             {rows.map((s) => (
-              <TableRow key={s.id}>
+              <TableRow key={s.id} className="supplier-row" onClick={(event) => {
+                if ((event.target as Element).closest("a, button, input, [role='checkbox']")) return;
+                navigate({ to: "/suppliers/$id", params: { id: s.id } });
+              }}>
                 <TableCell><Checkbox checked={sel.includes(s.id)} onCheckedChange={() => toggle(s.id)} aria-label="Сравнить" /></TableCell>
                 <TableCell><div className="flex items-center gap-1.5"><SupplierLink s={s} />{s.favorite && <Star className="size-3.5 fill-warning text-warning" />}<Flags s={s} /></div>
                   <div className="text-xs text-muted-foreground"><NoData value={s.legalName} /></div></TableCell>

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import type { Supplier } from "@/lib/fixtures";
 import { suppliers } from "@/lib/api-client";
 import { recommend } from "@/lib/recommend";
-import { PageHeader, Pending, ScorePill, SupplierLink } from "@/components/app/ui-bits";
+import { PageHeader, Pending, ScorePill } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
 import { Clover } from "lucide-react";
 
@@ -31,11 +31,11 @@ export function Lucky() {
       </CardContent></Card>
       {shown && <div className="mt-6 space-y-3">
         <Pending>Подбор по совпадению запроса с ассортиментом, категорией и регионом. Оценка пригодности используется только при равном совпадении.</Pending>
-        <div className="grid gap-4 md:grid-cols-3">{picks.map((s, i) => <Card key={s.id}><CardContent className="space-y-2 pt-6">
+        <div className="grid gap-4 md:grid-cols-3">{picks.map((s, i) => <Link key={s.id} to="/suppliers/$id" params={{ id: s.id }} className="card-link" aria-label={`Открыть карточку ${s.name}`}><Card className="h-full"><CardContent className="space-y-2 pt-6">
           <div className="flex justify-between"><span className="text-xs text-muted-foreground">#{i + 1}</span><ScorePill s={s} /></div>
-          <SupplierLink s={s} />
+          <span className="font-medium text-foreground">{s.name}</span>
           <p className="text-sm text-muted-foreground">Почему: {s.categories.join(", ")}; ассортимент {s.score.assortment}/100; ещё не работали.</p>
-        </CardContent></Card>)}</div>
+        </CardContent></Card></Link>)}</div>
         {picks.length < 3 && <p className="text-sm text-muted-foreground">Подходящих поставщиков меньше трёх — других кандидатов нет.</p>}
       </div>}
     </>

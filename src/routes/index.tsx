@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type Supplier } from "@/lib/fixtures";
 import { suppliers } from "@/lib/api-client";
-import { PageHeader, Stat, StatusBadge, SupplierLink, ScorePill } from "@/components/app/ui-bits";
+import { PageHeader, Stat, StatusBadge, ScorePill } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
 import { Globe, Clover } from "lucide-react";
 
@@ -38,18 +38,18 @@ function Dashboard() {
           <CardHeader><CardTitle className="text-base">Недавно найденные</CardTitle></CardHeader>
           <CardContent className="divide-y">
             {recent.map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3 py-3">
+              <Link key={s.id} to="/suppliers/$id" params={{ id: s.id }} className="supplier-tile flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-3" aria-label={`Открыть карточку ${s.name}`}>
                 <div className="min-w-0">
-                  <SupplierLink s={s} />
+                  <span className="font-medium text-foreground">{s.name}</span>
                   <div className="truncate text-xs text-muted-foreground">{s.categories.join(", ")} · {s.city}</div>
                 </div>
                 <div className="flex items-center gap-3"><StatusBadge status={s.status} /><ScorePill s={s} /></div>
-              </div>
+              </Link>
             ))}
           </CardContent>
         </Card>
         <Card><CardHeader><CardTitle className="text-base">Требуют проверки</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">{items.filter((s) => !s.verified).slice(0, 5).map((s) => <div key={s.id} className="rounded-md border p-3"><SupplierLink s={s} /><div className="text-xs text-muted-foreground">{s.sources.length} источник(ов) · сведения не подтверждены сотрудником</div></div>)}</CardContent></Card>
+          <CardContent className="space-y-3 text-sm">{items.filter((s) => !s.verified).slice(0, 5).map((s) => <Link key={s.id} to="/suppliers/$id" params={{ id: s.id }} className="supplier-tile block rounded-md border p-3" aria-label={`Открыть карточку ${s.name}`}><span className="font-medium text-foreground">{s.name}</span><div className="text-xs text-muted-foreground">{s.sources.length} источник(ов) · сведения не подтверждены сотрудником</div></Link>)}</CardContent></Card>
       </div>
     </>
   );
