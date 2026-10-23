@@ -4,7 +4,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$archivePath = [IO.Path]::GetFullPath((Join-Path (Get-Location).Path $Destination))
+$archivePath = if ([IO.Path]::IsPathRooted($Destination)) {
+  [IO.Path]::GetFullPath($Destination)
+} else {
+  [IO.Path]::GetFullPath((Join-Path (Get-Location).Path $Destination))
+}
 $outputPath = Join-Path $projectRoot ".output"
 $starterPath = Join-Path $projectRoot "deploy/alwaysdata/start.mjs"
 $backupPath = Join-Path $projectRoot "deploy/alwaysdata/backup.mjs"
