@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { CATEGORIES, PIPELINE, STATUS_LABELS, totalScore } from "@/lib/fixtures";
 import { Flags, NoData, PageHeader, ScorePill, StatusBadge, SupplierLink } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
-import { Plus, Database, Columns3, Star } from "lucide-react";
+import { Plus, Database, Columns3, Star, Clover } from "lucide-react";
 import { toast } from "sonner";
 import { createSupplier, request, suppliers } from "@/lib/api-client";
 import type { Supplier } from "@/lib/fixtures";
@@ -61,6 +61,7 @@ export function Directory() {
     <>
       <PageHeader title="Каталог поставщиков" description="Поиск только по внутренней базе"
         actions={<>
+          <Button variant="outline" asChild><Link to="/lucky"><Clover />Мне повезёт!</Link></Button>
           <Button variant="outline" onClick={importVerified}><Database />Импортировать каталог</Button>
           <NewSupplierDialog onCreated={(item) => setItems((all) => [item, ...all])} />
         </>} />
