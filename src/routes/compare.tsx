@@ -6,11 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SUPPLIERS, getSupplier, totalScore, type Supplier } from "@/lib/fixtures";
 import { NoData, PageHeader, Pending, StatusBadge } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
-import { Bookmark, Sparkles, X } from "lucide-react";
+import { Bookmark, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/compare")({
-  validateSearch: (s: Record<string, unknown>) => ({ ids: typeof s.ids === "string" ? s.ids : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ ids: typeof s["ids"] === "string" ? s["ids"] : undefined }),
   head: () => meta("Сравнение поставщиков", "Сравнение 2–4 поставщиков по ключевым параметрам."),
   component: Compare,
 });
@@ -52,7 +52,7 @@ function Compare() {
               {items.map((s) => <th key={s.id} className="p-3 text-left align-top">
                 <div className="flex items-start justify-between gap-2"><Link to="/suppliers/$id" params={{ id: s.id }} className="font-semibold hover:text-primary">{s.name}</Link>
                   <button onClick={() => setSel(sel.filter((x) => x !== s.id))} aria-label="Убрать" className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button></div>
-                <a href={s.sources[0]?.url} target="_blank" rel="noopener noreferrer nofollow" className="text-xs font-normal text-primary hover:underline">Источник</a>
+                <span className="text-xs font-normal text-muted-foreground">Демо-источник</span>
               </th>)}
               {sel.length < 4 && <th className="w-52 p-3 align-top">
                 <Select onValueChange={(v) => setSel([...sel, v])} value=""><SelectTrigger><SelectValue placeholder="+ Добавить" /></SelectTrigger>
@@ -72,8 +72,8 @@ function Compare() {
         </table>
       </div>
       <Card className="mt-6"><CardContent className="space-y-2 pt-6 text-sm">
-        <div className="flex items-center gap-2 font-medium"><Sparkles className="size-4 text-primary" />Рекомендация ИИ</div>
-        <Pending>Появится на этапе 3 и будет строиться только по данным из таблицы выше.</Pending>
+        <div className="flex items-center gap-2 font-medium">Рекомендация</div>
+        <Pending>Вывод по реальным поставщикам появится после загрузки проверенного каталога. Сейчас сравниваются демонстрационные данные.</Pending>
       </CardContent></Card>
     </>
   );

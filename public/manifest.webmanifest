@@ -1,0 +1,15 @@
+{
+  "name": "Поставка — сервис поиска и сравнения поставщиков",
+  "short_name": "Поставка",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070910",
+  "theme_color": "#070910",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

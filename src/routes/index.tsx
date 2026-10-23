@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EVENTS, SUPPLIERS, CONFLICTS, getSupplier } from "@/lib/fixtures";
 import { PageHeader, Stat, StatusBadge, SupplierLink, ScorePill } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
-import { Globe, Sparkles, Clover, AlertTriangle } from "lucide-react";
+import { Globe, Clover, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => meta("Обзор", "Сводка по поставщикам, последние события и задачи отдела закупок."),
@@ -19,9 +19,9 @@ function Dashboard() {
     <>
       <PageHeader title="Обзор" description="Екатеринбург и Свердловская область"
         actions={<>
-          <Button asChild variant="outline"><Link to="/discovery"><Globe />Найти в интернете</Link></Button>
-          <Button asChild variant="outline"><Link to="/ai-search"><Sparkles />ИИ-поиск</Link></Button>
-          <Button asChild><Link to="/lucky"><Clover />Мне повезёт!</Link></Button>
+          <Button asChild variant="outline"><Link to="/discovery"><Globe />Поиск по каталогу</Link></Button>
+
+          <Button asChild><Link to="/discovery"><Clover />Подбор поставщиков</Link></Button>
         </>} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Поставщиков в базе" value={SUPPLIERS.length} />

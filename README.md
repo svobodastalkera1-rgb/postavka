@@ -1,24 +1,39 @@
-# Screenshot Exact Match
+# Поставка
 
-Implement exactly the screenshot and nothing else
+**Поставка — сервис поиска и сравнения поставщиков.** Интерфейс прототипа для закупщика: каталог, карточка компании, сравнение 2–4 компаний и обзор.
 
-This project was built with [Lovable](https://lovable.dev).
+Сейчас в приложении используются **вымышленные демонстрационные данные**. Внешний интернет-поиск, AI и постоянное сохранение изменений не подключены. Кнопки, действие которых ещё не реализовано, помечены как демонстрационные. Не используйте этот каталог как источник реальных поставщиков.
 
-## Build with Lovable
+## Локальный запуск
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b72470e5-fcfd-4e32-9bbc-442a9bb9ea9b).
+Нужны Node.js 22 и pnpm. В PowerShell:
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```powershell
+pnpm install --frozen-lockfile
+pnpm dev
 ```
+
+Адрес разработки: `http://127.0.0.1:5173/`.
+
+## Проверка
+
+```powershell
+pnpm typecheck
+pnpm test
+pnpm build
+$env:PORT = '4173'
+pnpm start
+```
+
+Production-сборка использует Vite, TanStack Start и Nitro с серверным Node.js runtime. Адрес preview: `http://127.0.0.1:4173/`.
+
+## Структура
+
+- `src/routes/` — страницы и маршруты.
+- `src/components/` — элементы интерфейса.
+- `src/lib/fixtures.ts` — демонстрационные компании, статусы и расчёт рейтинга.
+- `src/styles.css` — токены и оформление.
+
+Поиск фильтрует каталог по тексту, группе и городу; сравнение показывает различия по полям. Рейтинг рассчитывается детерминированно из данных fixture и не служит независимой оценкой надёжности компании. Следующие этапы проекта: постоянное хранилище, ручное редактирование, проверенный каталог реальных поставщиков с источниками и публичное демо.
+
+Интерфейс сделан на основе существующего кода проекта. История Git сохранена. Используемые сторонние пакеты сохраняют собственные лицензионные условия; проектная лицензия пока не выбрана владельцем.

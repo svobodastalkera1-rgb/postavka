@@ -60,7 +60,7 @@ function Profile() {
           <TabsList><TabsTrigger value="info">Данные</TabsTrigger><TabsTrigger value="commerce">Коммерция</TabsTrigger><TabsTrigger value="contacts">Контакты</TabsTrigger><TabsTrigger value="timeline">Взаимодействия</TabsTrigger><TabsTrigger value="audit">Изменения</TabsTrigger></TabsList>
           <TabsContent value="info"><Card><CardContent className="divide-y pt-6">
             {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">{k}</span><span><NoData value={v} /></span></div>)}
-            <div className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">Источники</span><span className="space-y-1">{s.sources.map((x) => <a key={x.url} href={x.url} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-1 text-primary hover:underline">{x.url}<ExternalLink className="size-3" /><span className="text-muted-foreground">· {x.date}</span></a>)}</span></div>
+            <div className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">Источники</span><span className="space-y-1">{s.sources.map((x) => <span key={x.url} className="flex items-center gap-1 text-muted-foreground">Демо-источник · {x.date}</span>)}</span></div>
           </CardContent></Card></TabsContent>
           <TabsContent value="commerce"><Card><CardContent className="space-y-4 pt-6 text-sm">
             <div><div className="mb-2 font-medium">Ассортимент</div><NoData value={s.assortment.length ? <ul className="list-disc pl-5">{s.assortment.map((a) => <li key={a}>{a}</li>)}</ul> : null} /></div>

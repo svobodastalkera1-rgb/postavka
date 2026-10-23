@@ -13,7 +13,7 @@ export const Route = createFileRoute("/lucky")({
   component: Lucky,
 });
 
-function Lucky() {
+export function Lucky() {
   const [q, setQ] = useState("");
   const [shown, setShown] = useState(false);
   const picks = SUPPLIERS.filter((s) => !s.workedWith && !s.blacklisted).sort((a, b) => totalScore(b) - totalScore(a)).slice(0, 3);
