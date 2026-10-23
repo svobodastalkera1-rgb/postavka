@@ -10,4 +10,9 @@
 
 Если приложение не запускается, проверьте журнал сайта, версию Node, путь к архиву и переменные окружения. Папка `postavka-data` должна оставаться вне каталога очередной сборки.
 
+SQLite здесь хранит рабочие данные, а не демонстрационную заглушку. Создайте `/home/<account>/postavka-data` с правами `700`; файлы БД и её `-wal`/`-shm` должны быть доступны только владельцу (`600`). `start.mjs` устанавливает приватную маску прав для новых файлов. Держите БД на локальном диске одного сервера, вне публичного каталога. Общий пароль редактора подходит только для ограниченного демо: перед работой команды потребуются личные учётные записи, права по ролям и отзыв сессий.
+
+Для согласованной резервной копии работающей БД используйте `POSTAVKA_DB_PATH=/home/<account>/postavka-data/postavka.sqlite node /home/<account>/postavka/backup.mjs /home/<account>/postavka-backups/postavka-YYYY-MM-DD.sqlite`. Скрипт проверяет целостность копии до публикации файла. Храните резервные копии вне публичного каталога, ограничьте права и регулярно проверяйте восстановление на отдельной копии. Копии на том же аккаунте не защищают от потери всего аккаунта: сохраняйте зашифрованную копию вне alwaysdata. Не копируйте живой `.sqlite` через SFTP без SQLite backup API, пока включён WAL.
+
 Официальные сведения: [Free](https://www.alwaysdata.com/en/offers/), [Node.js](https://help.alwaysdata.com/en/docs/web-hosting/languages/nodejs/configuration/), [HTTPS](https://help.alwaysdata.com/en/docs/web-hosting/sites/ssl-tls/lets-encrypt/), [SFTP](https://help.alwaysdata.com/en/docs/web-hosting/remote-access/sftp/).
+

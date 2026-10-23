@@ -15,8 +15,8 @@ export function closeStore() { database?.close(); database = undefined; }
 function db() {
   if (database) return database;
   const path = resolve(process.env["POSTAVKA_DB_PATH"] || "data/postavka.sqlite");
-  mkdirSync(dirname(path), { recursive: true });
-  const next = new DatabaseSync(path);
+  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+  const next = new DatabaseSync(path, { timeout: 5000 });
   next.exec(`PRAGMA journal_mode=WAL;
     CREATE TABLE IF NOT EXISTS suppliers (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS suppliers_updated_at ON suppliers(updated_at, id);
@@ -163,3 +163,4 @@ export function addInteraction(id: string, type: string, text: string, author: s
   db().prepare("INSERT INTO interactions VALUES (?,?,?,?,?,?)").run(item.id, id, type, text, author, item.createdAt);
   return item;
 }
+

@@ -7,6 +7,7 @@ $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $archivePath = [IO.Path]::GetFullPath((Join-Path (Get-Location).Path $Destination))
 $outputPath = Join-Path $projectRoot ".output"
 $starterPath = Join-Path $projectRoot "deploy/alwaysdata/start.mjs"
+$backupPath = Join-Path $projectRoot "deploy/alwaysdata/backup.mjs"
 
 Push-Location $projectRoot
 try {
@@ -24,6 +25,7 @@ try {
   try {
     Copy-Item -LiteralPath $outputPath -Destination (Join-Path $stagingPath ".output") -Recurse
     Copy-Item -LiteralPath $starterPath -Destination (Join-Path $stagingPath "start.mjs")
+    Copy-Item -LiteralPath $backupPath -Destination (Join-Path $stagingPath "backup.mjs")
     New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($archivePath)) -Force | Out-Null
     if (Test-Path -LiteralPath $archivePath) { Remove-Item -LiteralPath $archivePath }
     [IO.Compression.ZipFile]::CreateFromDirectory($stagingPath, $archivePath)
@@ -38,3 +40,4 @@ try {
 } finally {
   Pop-Location
 }
+
