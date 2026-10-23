@@ -1,28 +1,64 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { AUDIT, CONFLICTS, EVENTS, PIPELINE, STATUS_LABELS, getSupplier, totalScore } from "@/lib/fixtures";
+import { PIPELINE, STATUS_LABELS, getSupplier, totalScore, type Supplier } from "@/lib/fixtures";
 import { Flags, NoData, StatusBadge } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
 import { ArrowLeft, Ban, ExternalLink, Pencil, ShieldCheck, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { request, supplier as loadSupplier, updateSupplier } from "@/lib/api-client";
+import { SupplierEditor } from "@/components/app/SupplierEditor";
+import type { Change, Interaction, Proposal } from "@/lib/store.server";
+
+const FIELD_LABELS: Record<string, string> = { name: "Название", legalName: "Юридическое лицо", inn: "ИНН", website: "Сайт", phone: "Телефон", email: "Email", address: "Адрес", city: "Город", regions: "Регионы", group: "Группа", categories: "Категории", assortment: "Ассортимент", prices: "Цены", minOrder: "Минимальный заказ", minOrderRub: "Минимальный заказ, ₽", delivery: "Доставка", hasDelivery: "Есть доставка", documents: "Документы", rating: "Внутренний рейтинг", status: "Статус", blacklisted: "Чёрный список", favorite: "Избранное", verified: "Подтверждено", workedWith: "Работали ранее", contacts: "Контакты", notes: "Заметки", discoveredAt: "Дата обнаружения", verifiedAt: "Дата актуальности", sources: "Источники" };
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Да" : "Нет";
+  if (Array.isArray(value)) return value.length ? value.map(formatValue).join("; ") : "—";
+  if (typeof value === "object") return Object.entries(value).map(([key, item]) => `${key}: ${formatValue(item)}`).join("; ");
+  return String(value);
+}
 
 export const Route = createFileRoute("/suppliers/$id")({
-  loader: ({ params }) => { const s = getSupplier(params.id); if (!s) throw notFound(); return s; },
-  head: ({ loaderData }) => meta(loaderData?.name ?? "Поставщик", "Профиль поставщика: условия, контакты, история и оценка."),
+  head: () => meta("Поставщик", "Профиль поставщика: условия, контакты, история и оценка."),
   component: Profile,
 });
 
-const soon = () => toast("Сохранение заработает на этапе 2");
-
 function Profile() {
-  const s = Route.useLoaderData();
-  const events = EVENTS.filter((e) => e.supplierId === s.id);
-  const conflicts = CONFLICTS.filter((c) => c.supplierId === s.id);
+  const { id } = Route.useParams();
+  const [s, setSupplier] = useState<Supplier | null>(getSupplier(id) ?? null);
+  const [editing, setEditing] = useState(false);
+  const [events, setEvents] = useState<Interaction[]>([]);
+  const [audit, setAudit] = useState<Change[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [entry, setEntry] = useState("");
+  useEffect(() => {
+    setSupplier(getSupplier(id) ?? null);
+    loadSupplier(id).then(setSupplier).catch((error) => toast.error(error.message));
+    request<Interaction[]>(`/suppliers/${id}/interactions`).then(setEvents).catch(() => {});
+    request<Change[]>(`/suppliers/${id}/changes`).then(setAudit).catch(() => {});
+    request<Proposal[]>(`/suppliers/${id}/proposals`).then(setProposals).catch(() => {});
+  }, [id]);
+  const save = async (data: Record<string, unknown>) => {
+    if (!s) return;
+    try { setSupplier(await updateSupplier(s.id, data)); toast.success("Изменения сохранены"); }
+    catch (error) { toast.error((error as Error).message); }
+  };
+  const addEvent = async () => {
+    if (!s) return;
+    try { const event = await request<Interaction>(`/suppliers/${s.id}/interactions`, { method: "POST", body: JSON.stringify({ type: "Заметка", text: entry }) }); setEvents((all) => [event, ...all]); setEntry(""); toast.success("Запись добавлена"); }
+    catch (error) { toast.error((error as Error).message); }
+  };
+  const resolve = async (proposal: Proposal, action: "accept" | "reject") => {
+    try { setSupplier(await request<Supplier>(`/suppliers/${id}/proposals/${proposal.id}/${action}`, { method: "POST" })); setProposals((all) => all.filter((item) => item.id !== proposal.id)); toast.success(action === "accept" ? "Обновление принято" : "Обновление отклонено"); }
+    catch (error) { toast.error((error as Error).message); }
+  };
+  if (!s) return <p>Загружаем карточку поставщика…</p>;
   const rows: [string, React.ReactNode][] = [
     ["Юридическое лицо", s.legalName], ["ИНН", s.inn], ["Сайт", s.website && <a href={s.website} target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">{s.website}</a>],
     ["Телефон", s.phone], ["Email", s.email], ["Адрес", s.address], ["Регионы работы", s.regions.join(", ")],
@@ -41,17 +77,17 @@ function Profile() {
           {s.blacklisted && <div className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-sm text-destructive">В чёрном списке: {s.blacklisted.reason} · {s.blacklisted.author}, {s.blacklisted.date}</div>}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={soon}><Star className={s.favorite ? "fill-warning text-warning" : ""} />{s.favorite ? "В избранном" : "В избранное"}</Button>
-          <Button variant="outline" onClick={soon}><ShieldCheck />Отметить проверенным</Button>
-          <Button variant="outline" onClick={soon}><Ban />В чёрный список</Button>
-          <Button onClick={soon}><Pencil />Редактировать</Button>
+          <Button variant="outline" onClick={() => save({ favorite: !s.favorite })}><Star className={s.favorite ? "fill-warning text-warning" : ""} />{s.favorite ? "В избранном" : "В избранное"}</Button>
+          <Button variant="outline" onClick={() => save({ verified: !s.verified, verifiedAt: !s.verified ? new Date().toISOString().slice(0, 10) : null })}><ShieldCheck />{s.verified ? "Снять подтверждение" : "Отметить проверенным"}</Button>
+          <Button variant="outline" onClick={() => save({ blacklisted: s.blacklisted ? null : { reason: "Добавлен сотрудником", author: "Сотрудник", date: new Date().toISOString().slice(0, 10) } })}><Ban />{s.blacklisted ? "Убрать из чёрного списка" : "В чёрный список"}</Button>
+          <Button onClick={() => setEditing(true)}><Pencil />Редактировать</Button>
         </div>
       </div>
 
-      {conflicts.map((c, i) => (
-        <div key={i} className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-warning-soft p-3 text-sm">
-          <span>Предложено обновление «{c.field}»: <b>{c.verified}</b> → <b>{c.proposed}</b> (источник {c.source}, {c.date})</span>
-          <span className="flex gap-2"><Button size="sm" variant="outline" onClick={soon}>Отклонить</Button><Button size="sm" onClick={soon}>Принять</Button></span>
+      {proposals.map((proposal) => (
+        <div key={proposal.id} className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-warning-soft p-3 text-sm">
+          <span>Предложено обновление «{FIELD_LABELS[proposal.field] ?? proposal.field}»: <b>{formatValue(s[proposal.field as keyof Supplier])}</b> → <b>{formatValue(proposal.proposed)}</b> (источник {proposal.source}, {proposal.createdAt})</span>
+          <span className="flex gap-2"><Button size="sm" variant="outline" onClick={() => resolve(proposal, "reject")}>Отклонить</Button><Button size="sm" onClick={() => resolve(proposal, "accept")}>Принять</Button></span>
         </div>
       ))}
 
@@ -60,30 +96,30 @@ function Profile() {
           <TabsList><TabsTrigger value="info">Данные</TabsTrigger><TabsTrigger value="commerce">Коммерция</TabsTrigger><TabsTrigger value="contacts">Контакты</TabsTrigger><TabsTrigger value="timeline">Взаимодействия</TabsTrigger><TabsTrigger value="audit">Изменения</TabsTrigger></TabsList>
           <TabsContent value="info"><Card><CardContent className="divide-y pt-6">
             {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">{k}</span><span><NoData value={v} /></span></div>)}
-            <div className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">Источники</span><span className="space-y-1">{s.sources.map((x) => <span key={x.url} className="flex items-center gap-1 text-muted-foreground">Демо-источник · {x.date}</span>)}</span></div>
+            <div className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">Источники</span><span className="space-y-1">{s.sources.length ? s.sources.map((x) => <span key={x.url} className="flex items-center gap-1 text-muted-foreground"><a href={x.url} target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">{x.url}</a> · {x.date}</span>) : <NoData value={null} />}</span></div>
           </CardContent></Card></TabsContent>
           <TabsContent value="commerce"><Card><CardContent className="space-y-4 pt-6 text-sm">
             <div><div className="mb-2 font-medium">Ассортимент</div><NoData value={s.assortment.length ? <ul className="list-disc pl-5">{s.assortment.map((a) => <li key={a}>{a}</li>)}</ul> : null} /></div>
             <div><div className="mb-2 font-medium">Цены и КП</div>{s.prices.length ? <table className="w-full"><tbody>{s.prices.map((p) => <tr key={p.item} className="border-t"><td className="py-2">{p.item}</td><td className="text-right font-mono">{p.price.toLocaleString("ru")} ₽ / {p.unit}</td></tr>)}</tbody></table> : <NoData value={null} />}</div>
-            <Button variant="outline" size="sm" onClick={soon}>Добавить КП</Button>
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Редактировать условия</Button>
           </CardContent></Card></TabsContent>
           <TabsContent value="contacts"><Card><CardContent className="space-y-3 pt-6 text-sm">
             {s.contacts.length ? s.contacts.map((c) => <div key={c.name} className="rounded-md border p-3"><div className="font-medium">{c.name}</div><div className="text-muted-foreground">{c.role}</div><div><NoData value={c.phone} /> · <NoData value={c.email} /></div></div>) : <NoData value={null} />}
-            <Button variant="outline" size="sm" onClick={soon}>Добавить контакт</Button>
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Редактировать контакты</Button>
           </CardContent></Card></TabsContent>
           <TabsContent value="timeline"><Card><CardContent className="space-y-4 pt-6">
-            <div className="flex gap-2"><Textarea placeholder="Звонок, письмо, договорённость…" /><Button onClick={soon}>Записать</Button></div>
-            {events.length ? events.map((e) => <div key={e.id} className="border-l-2 border-primary pl-3 text-sm"><div className="text-xs text-muted-foreground">{e.date} · {e.type} · {e.author}</div>{e.text}</div>) : <p className="text-sm text-muted-foreground">Записей пока нет.</p>}
+            <div className="flex gap-2"><Textarea placeholder="Звонок, письмо, договорённость…" value={entry} onChange={(e) => setEntry(e.target.value)} /><Button onClick={addEvent} disabled={!entry.trim()}>Записать</Button></div>
+            {events.length ? events.map((e) => <div key={e.id} className="border-l-2 border-primary pl-3 text-sm"><div className="text-xs text-muted-foreground">{e.createdAt} · {e.type} · {e.author}</div>{e.text}</div>) : <p className="text-sm text-muted-foreground">Записей пока нет.</p>}
           </CardContent></Card></TabsContent>
           <TabsContent value="audit"><Card><CardContent className="pt-6 text-sm">
-            <table className="w-full"><thead className="text-left text-xs text-muted-foreground"><tr><th className="pb-2">Поле</th><th>Было</th><th>Стало</th><th>Автор</th><th>Источник</th><th>Когда</th></tr></thead>
-              <tbody>{AUDIT.map((a, i) => <tr key={i} className="border-t"><td className="py-2">{a.field}</td><td>{a.from}</td><td>{a.to}</td><td>{a.author}</td><td>{a.source}</td><td className="font-mono text-xs">{a.date}</td></tr>)}</tbody></table>
+            <table className="w-full"><thead className="text-left text-xs text-muted-foreground"><tr><th className="pb-2">Поле</th><th>Было</th><th>Стало</th><th>Автор</th><th>Источник</th><th>Подтверждение</th><th>Когда</th></tr></thead>
+              <tbody>{audit.map((a) => <tr key={a.id} className="border-t"><td className="py-2">{FIELD_LABELS[a.field] ?? a.field}</td><td>{formatValue(a.before)}</td><td>{formatValue(a.after)}</td><td>{a.author}</td><td>{a.source === "employee" ? "Сотрудник" : a.source} · {a.method === "manual" ? "вручную" : a.method}</td><td>{a.confirmation === "confirmed" ? "Подтверждено" : "Не подтверждено"}</td><td className="font-mono text-xs">{a.changedAt}</td></tr>)}</tbody></table>
           </CardContent></Card></TabsContent>
         </Tabs>
 
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="text-base">Статус сотрудничества</CardTitle></CardHeader><CardContent>
-            <Select defaultValue={s.status} onValueChange={soon}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
+            <Select value={s.status} onValueChange={(status) => save({ status })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
               {[...PIPELINE, "rejected", "ended"].map((x) => <SelectItem key={x} value={x}>{STATUS_LABELS[x as keyof typeof STATUS_LABELS]}</SelectItem>)}
             </SelectContent></Select>
             <div className="mt-4 flex gap-1">{PIPELINE.map((p, i) => <div key={p} title={STATUS_LABELS[p]} className={`h-1.5 flex-1 rounded-full ${i <= PIPELINE.indexOf(s.status) ? "bg-primary" : "bg-muted"}`} />)}</div>
@@ -97,6 +133,7 @@ function Profile() {
           <Card><CardHeader><CardTitle className="text-base">Заметки</CardTitle></CardHeader><CardContent className="text-sm"><NoData value={s.notes} /></CardContent></Card>
         </div>
       </div>
+      <SupplierEditor supplier={s} open={editing} onOpenChange={setEditing} onSaved={(updated) => { setSupplier(updated); request<Change[]>(`/suppliers/${s.id}/changes`).then(setAudit).catch(() => {}); }} />
     </>
   );
 }

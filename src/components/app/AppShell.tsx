@@ -1,9 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useState } from "react";
-import {
-  LayoutDashboard, Building2, Globe, Sparkles, Columns3, Clover, Star, Ban, History, BarChart3, Settings, LogOut, Menu, X,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { LayoutDashboard, Building2, Globe, Columns3, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { request } from "@/lib/api-client";
 
 const NAV = [
   { to: "/", label: "Обзор", icon: LayoutDashboard },
@@ -15,7 +14,11 @@ const NAV = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<string | null>(null);
+  useEffect(() => { request<{ name: string | null }>("/session").then((session) => setUser(session.name)).catch(() => {}); }, [path]);
+  const logout = async () => { await request("/session", { method: "DELETE" }); setUser(null); navigate({ to: "/auth" }); };
   const nav = (
     <nav aria-label="Основная навигация" className="flex flex-col gap-0.5 px-3">
       {NAV.map(({ to, label, icon: Icon }) => {
@@ -42,17 +45,17 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex-1 overflow-y-auto">{nav}</div>
         <div className="mx-3 mt-4 flex items-center justify-between rounded-md border border-sidebar-border px-3 py-2">
           <div className="text-xs">
-            <div className="text-sidebar-accent-foreground">Олег М. (демо)</div>
-            <div className="text-sidebar-foreground/70">Админ</div>
+            <div className="text-sidebar-accent-foreground">{user ?? "Гость"}</div>
+            <div className="text-sidebar-foreground/70">{user ? "Сотрудник" : "Просмотр"}</div>
           </div>
           <Link to="/admin" className="text-sidebar-foreground hover:text-sidebar-accent-foreground" aria-label="Настройки"><Settings className="size-4" /></Link>
-          <Link to="/auth" className="text-sidebar-foreground hover:text-sidebar-accent-foreground" aria-label="Выйти"><LogOut className="size-4" /></Link>
+          {user ? <button onClick={logout} className="text-sidebar-foreground hover:text-sidebar-accent-foreground" aria-label="Выйти"><LogOut className="size-4" /></button> : <Link to="/auth" className="text-xs text-sidebar-foreground hover:text-sidebar-accent-foreground">Войти</Link>}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
         <div className="flex items-center gap-3 border-b bg-warning-soft px-4 py-1.5 text-xs text-warning">
           <button className="lg:hidden" onClick={() => setOpen(true)} aria-label="Открыть меню"><Menu className="size-4" /></button>
-          Этап 1 · Демо-данные: все компании и цифры вымышлены и служат только для просмотра интерфейса.
+          Начальный каталог содержит вымышленные компании. Добавленные вами карточки и изменения сохраняются на сервере.
         </div>
         <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-8">{children}</main>
       </div>
