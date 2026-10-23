@@ -6,14 +6,14 @@ export type Status =
   | "quote_received" | "negotiation" | "active" | "rejected" | "ended";
 
 export const STATUS_LABELS: Record<Status, string> = {
-  discovered: "Найден",
-  review: "На рассмотрении",
-  contact_planned: "Запланирован контакт",
+  discovered: "Обнаружен",
+  review: "На проверке",
+  contact_planned: "Планируется контакт",
   contacted: "Связались",
   quote_requested: "Запрошено КП",
   quote_received: "Получено КП",
   negotiation: "Переговоры",
-  active: "Активный поставщик",
+  active: "Сотрудничаем",
   rejected: "Отклонён",
   ended: "Сотрудничество завершено",
 };

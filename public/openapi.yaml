@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: Поставка API
+  version: 0.2.0
+  description: API прототипа. Совместимость с конкретной конфигурацией 1С не подтверждена.
+servers:
+  - url: /api
+components:
+  securitySchemes:
+    integrationToken:
+      type: http
+      scheme: bearer
+      description: Значение POSTAVKA_INTEGRATION_TOKEN на сервере.
+    employeeSession:
+      type: apiKey
+      in: cookie
+      name: postavka_session
+  schemas:
+    Supplier:
+      type: object
+      required: [id, name, city, status]
+      properties:
+        id: { type: string, description: Стабильный идентификатор }
+        name: { type: string }
+        city: { type: string }
+        status:
+          type: string
+          enum: [discovered, review, contact_planned, contacted, quote_requested, quote_received, negotiation, active, ended, rejected]
+        updatedAt: { type: string, format: date-time }
+        notes: { type: string, nullable: true, description: Скрыто для анонимных запросов }
+        contacts: { type: array, items: { type: object }, description: Скрыто для анонимных запросов }
+        prices: { type: array, items: { type: object }, description: Скрыто для анонимных запросов }
+paths:
+  /suppliers:
+    get:
+      summary: Список карточек и изменённых записей
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: updated_after, in: query, schema: { type: string, format: date-time } }
+      responses:
+        '200': { description: Объект items, total, limit, offset }
+    post:
+      summary: Создать поставщика вручную
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [name], properties: { name: { type: string }, city: { type: string }, group: { type: string } } } } } }
+      responses:
+        '201': { description: Карточка создана }
+        '401': { description: Нет прав на запись }
+  /suppliers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: Получить карточку
+      responses:
+        '200': { description: Карточка, content: { application/json: { schema: { $ref: '#/components/schemas/Supplier' } } } }
+        '404': { description: Карточка не найдена }
+    patch:
+      summary: Изменить поля карточки
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses:
+        '200': { description: Обновлённая карточка }
+        '400': { description: Некорректные поля }
+        '401': { description: Нет прав на запись }
+  /suppliers/{id}/changes:
+    get:
+      summary: История изменения полей
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: Записи с прежним и новым значением, автором, источником и подтверждением } }
+  /suppliers/{id}/interactions:
+    get:
+      summary: История взаимодействий
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: Список взаимодействий } }
+    post:
+      summary: Добавить взаимодействие
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, required: [type, text], properties: { type: { type: string }, text: { type: string } } } } } }
+      responses: { '201': { description: Запись создана } }
+  /suppliers/{id}/proposals:
+    get:
+      summary: Предложения обновлений подтверждённых данных
+      security: [{ employeeSession: [] }, { integrationToken: [] }]
+      parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: Ожидающие предложения } }

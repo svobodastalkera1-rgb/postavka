@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +12,8 @@ import { Flags, NoData, PageHeader, ScorePill, StatusBadge, SupplierLink } from 
 import { meta } from "@/lib/meta";
 import { Plus, Bookmark, Columns3, Star } from "lucide-react";
 import { toast } from "sonner";
+import { createSupplier, suppliers } from "@/lib/api-client";
+import type { Supplier } from "@/lib/fixtures";
 
 export const Route = createFileRoute("/suppliers/")({
   head: () => meta("Каталог поставщиков", "Поиск и фильтрация поставщиков во внутренней базе."),
@@ -21,26 +23,30 @@ export const Route = createFileRoute("/suppliers/")({
 const ALL = "all";
 
 export function Directory() {
+  const [items, setItems] = useState<Supplier[]>(SUPPLIERS);
+  useEffect(() => { suppliers().then((data) => setItems(data.items)).catch((error) => toast.error(error.message)); }, []);
   const [view, setView] = useState("all");
   const [q, setQ] = useState("");
   const [group, setGroup] = useState(ALL);
   const [status, setStatus] = useState(ALL);
   const [city, setCity] = useState(ALL);
+  const [region, setRegion] = useState(ALL);
   const [delivery, setDelivery] = useState(false);
   const [verified, setVerified] = useState(false);
   const [hideBl, setHideBl] = useState(true);
   const [sort, setSort] = useState("score");
   const [sel, setSel] = useState<string[]>([]);
-  const cities = [...new Set(SUPPLIERS.map((s) => s.city))];
+  const cities = [...new Set(items.map((s) => s.city))];
+  const regions = [...new Set(items.flatMap((s) => s.regions))];
 
   const rows = useMemo(() => {
     const t = q.toLowerCase();
-    return SUPPLIERS.filter((s) =>
-      (!t || [s.name, ...s.assortment, ...s.categories].join(" ").toLowerCase().includes(t)) &&
-      (group === ALL || s.group === group) && (status === ALL || s.status === status) && (city === ALL || s.city === city) &&
+    return items.filter((s) =>
+      (!t || [s.name, s.city, ...s.regions, ...s.assortment, ...s.categories].join(" ").toLowerCase().includes(t)) &&
+      (group === ALL || s.group === group) && (status === ALL || s.status === status) && (city === ALL || s.city === city) && (region === ALL || s.regions.includes(region)) &&
       (view !== "favorites" || s.favorite) && (view !== "blacklist" || s.blacklisted) && (!delivery || s.hasDelivery) && (!verified || s.verified) && (view === "blacklist" || !hideBl || !s.blacklisted),
     ).sort((a, b) => sort === "score" ? totalScore(b) - totalScore(a) : sort === "name" ? a.name.localeCompare(b.name) : b.discoveredAt.localeCompare(a.discoveredAt));
-  }, [q, group, status, city, delivery, verified, hideBl, sort, view]);
+  }, [items, q, group, status, city, region, delivery, verified, hideBl, sort, view]);
 
   const toggle = (id: string) => setSel((p) => p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p);
 
@@ -49,7 +55,7 @@ export function Directory() {
       <PageHeader title="Каталог поставщиков" description="Поиск только по внутренней базе"
         actions={<>
           <Button variant="outline" onClick={() => toast("Поиск сохранён (демо)")}><Bookmark />Сохранить поиск</Button>
-          <NewSupplierDialog />
+          <NewSupplierDialog onCreated={(item) => setItems((all) => [item, ...all])} />
         </>} />
       <div className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-4">
         <Select value={view} onValueChange={setView}><SelectTrigger aria-label="Список поставщиков"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Все поставщики</SelectItem><SelectItem value="favorites">Избранное</SelectItem><SelectItem value="blacklist">Чёрный список</SelectItem></SelectContent></Select>
@@ -61,6 +67,10 @@ export function Directory() {
         <Select value={city} onValueChange={setCity}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
           <SelectItem value={ALL}>Все города</SelectItem>
           {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+        </SelectContent></Select>
+        <Select value={region} onValueChange={setRegion}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
+          <SelectItem value={ALL}>Все регионы</SelectItem>
+          {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
         </SelectContent></Select>
         <Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
           <SelectItem value={ALL}>Любой статус</SelectItem>
@@ -107,23 +117,31 @@ export function Directory() {
           </TableBody>
         </Table>
       </div>
-      <div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>Показано {rows.length} из {SUPPLIERS.length}</span><span>Страница 1 из 1</span></div>
+      <div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>Показано {rows.length} из {items.length}</span><span>Страница 1 из 1</span></div>
     </>
   );
 }
 
-function NewSupplierDialog() {
+function NewSupplierDialog({ onCreated }: { onCreated: (item: Supplier) => void }) {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", legalName: "", inn: "", website: "", phone: "", city: "Екатеринбург" });
+  const save = async () => {
+    try {
+      const item = await createSupplier({ ...form, group: "food" });
+      onCreated(item); setOpen(false); toast.success("Поставщик создан");
+    } catch (error) { toast.error((error as Error).message); }
+  };
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button><Plus />Добавить поставщика</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Новый поставщик</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          {["Название компании", "Юридическое лицо", "ИНН", "Сайт", "Телефон", "Город"].map((l) => (
-            <div key={l} className="grid gap-1.5"><Label>{l}</Label><Input /></div>
+          {([ ["name", "Название компании"], ["legalName", "Юридическое лицо"], ["inn", "ИНН"], ["website", "Сайт"], ["phone", "Телефон"], ["city", "Город"] ] as const).map(([key, label]) => (
+            <div key={key} className="grid gap-1.5"><Label>{label}</Label><Input value={form[key]} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value }))} /></div>
           ))}
         </div>
-        <DialogFooter><Button onClick={() => toast("Сохранение заработает на этапе 2")}>Создать</Button></DialogFooter>
+        <DialogFooter><Button onClick={save} disabled={!form.name.trim()}>Создать</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
