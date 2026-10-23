@@ -13,6 +13,12 @@ export const Route = createFileRoute("/analytics")({
 });
 
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+const tooltipStyle = {
+  contentStyle: { background: "#11192b", border: "1px solid rgba(173,154,255,.55)", borderRadius: 12, boxShadow: "0 16px 36px rgba(0,0,0,.45)", padding: "10px 14px" },
+  labelStyle: { color: "#f4f7ff", fontWeight: 700, marginBottom: 4 },
+  itemStyle: { color: "#dcd4ff", fontWeight: 600 },
+  cursor: { fill: "rgba(173,154,255,.12)" },
+};
 const count = <T,>(arr: T[], f: (x: T) => string) => Object.entries(arr.reduce<Record<string, number>>((m, x) => ((m[f(x)] = (m[f(x)] || 0) + 1), m), {})).map(([name, value]) => ({ name, value }));
 
 function Analytics() {
@@ -34,10 +40,10 @@ function Analytics() {
         <Stat label="Сотрудничаем" value={items.filter((s) => s.status === "active").length} />
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {box("По категориям", <PieChart><Pie data={byGroup} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label>{byGroup.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}</Pie><Tooltip /></PieChart>)}
-        {box("По городам", <BarChart data={byCity}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="name" fontSize={12} /><YAxis allowDecimals={false} fontSize={12} /><Tooltip /><Bar dataKey="value" name="Поставщиков" fill="var(--chart-1)" radius={4} /></BarChart>)}
-        {box("Полнота карточек", <BarChart data={completeness}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="name" fontSize={12} /><YAxis allowDecimals={false} fontSize={12} /><Tooltip /><Bar dataKey="value" name="Поставщиков" fill="var(--chart-3)" radius={4} /></BarChart>)}
-        {box("По статусам", <BarChart data={funnel} layout="vertical" margin={{ left: 60 }}><XAxis type="number" allowDecimals={false} fontSize={12} /><YAxis type="category" dataKey="name" fontSize={11} width={120} /><Tooltip /><Bar dataKey="value" name="Поставщиков" fill="var(--chart-2)" radius={4} /></BarChart>)}
+        {box("По категориям", <PieChart><Pie data={byGroup} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} label>{byGroup.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}</Pie><Tooltip {...tooltipStyle} /></PieChart>)}
+        {box("По городам", <BarChart data={byCity}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="name" fontSize={12} /><YAxis allowDecimals={false} fontSize={12} /><Tooltip {...tooltipStyle} /><Bar dataKey="value" name="Поставщиков" fill="var(--chart-1)" radius={4} /></BarChart>)}
+        {box("Полнота карточек", <BarChart data={completeness}><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" /><XAxis dataKey="name" fontSize={12} /><YAxis allowDecimals={false} fontSize={12} /><Tooltip {...tooltipStyle} labelFormatter={(label) => `Полнота ${label}%`} formatter={(value) => [value, "Поставщиков"]} /><Bar dataKey="value" name="Поставщиков" fill="var(--chart-3)" radius={4} /></BarChart>)}
+        {box("По статусам", <BarChart data={funnel} layout="vertical" margin={{ left: 60 }}><XAxis type="number" allowDecimals={false} fontSize={12} /><YAxis type="category" dataKey="name" fontSize={11} width={120} /><Tooltip {...tooltipStyle} /><Bar dataKey="value" name="Поставщиков" fill="var(--chart-2)" radius={4} /></BarChart>)}
       </div>
     </>
   );

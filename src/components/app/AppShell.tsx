@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
   return (
     <div className="flex min-h-screen">
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 flex-col border-r border-sidebar-border bg-sidebar py-5 ${open ? "flex" : "hidden"} lg:flex`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 flex-col border-r border-sidebar-border bg-sidebar/80 py-5 backdrop-blur-xl ${open ? "flex" : "hidden"} lg:flex`}>
         <div className="mb-6 flex items-center justify-between px-6">
           <div>
             <div className="text-base font-semibold text-sidebar-accent-foreground">Поставка</div>

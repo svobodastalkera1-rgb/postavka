@@ -51,7 +51,7 @@ function Compare() {
     <>
       <PageHeader title="Сравнение поставщиков" description="Различия подсвечены. Несопоставимые цены не участвуют в рекомендации." />
       {items.length < 2 && <Pending>Выберите минимум двух поставщиков.</Pending>}
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="glass-card overflow-x-auto rounded-lg border">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b">
