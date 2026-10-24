@@ -6,6 +6,11 @@ import { z } from "zod";
 const json = (value: unknown, status = 200, headers?: HeadersInit) => Response.json(value, { status, headers: { "Cache-Control": "no-store", ...headers } });
 const unauthorized = () => json({ error: "Требуется вход" }, 401);
 const secret = () => process.env['POSTAVKA_SESSION_SECRET'];
+function publicOrigin(request: Request, url: URL) {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("host");
+  return forwardedProto === "https" && host ? `https://${host}` : url.origin;
+}
 
 function equal(a: string, b: string) {
   const aa = Buffer.from(a), bb = Buffer.from(b);
@@ -60,7 +65,7 @@ export async function api(request: Request): Promise<Response | null> {
   if (!url.pathname.startsWith("/api/")) return null;
   if (!["GET", "HEAD"].includes(request.method) && !integration(request)) {
     const origin = request.headers.get("origin");
-    if (origin && origin !== url.origin) return json({ error: "Недопустимый источник запроса" }, 403);
+    if (origin && origin !== publicOrigin(request, url)) return json({ error: "Недопустимый источник запроса" }, 403);
   }
   const path = url.pathname.split("/").filter(Boolean);
   if (path[1] === "session") {
@@ -73,7 +78,7 @@ export async function api(request: Request): Promise<Response | null> {
       const name = encodeURIComponent(typeof data['name'] === "string" && data['name'].trim() ? data['name'].trim().slice(0, 80) : "Сотрудник").replaceAll(".", "%2E");
       const expiry = String(Date.now() + 12 * 60 * 60 * 1000);
       const value = `${name}.${expiry}.${signed(`${name}.${expiry}`)}`;
-      return json({ authenticated: true }, 200, { "Set-Cookie": `postavka_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${url.protocol === "https:" ? "; Secure" : ""}` });
+      return json({ authenticated: true }, 200, { "Set-Cookie": `postavka_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${publicOrigin(request, url).startsWith("https:") ? "; Secure" : ""}` });
     }
   }
   if (path[1] === "catalog" && path[2] === "import" && request.method === "POST") return employee(request) ? json(importCatalog()) : unauthorized();

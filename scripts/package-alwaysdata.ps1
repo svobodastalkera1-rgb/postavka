@@ -3,6 +3,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $archivePath = if ([IO.Path]::IsPathRooted($Destination)) {
   [IO.Path]::GetFullPath($Destination)
@@ -44,4 +45,3 @@ try {
 } finally {
   Pop-Location
 }
-

@@ -56,6 +56,15 @@ test("аноним не может изменять карточку или чи
   expect((await publicSupplier.json() as { contacts: unknown[]; notes: unknown }).contacts).toEqual([]);
 });
 
+test("вход через HTTPS-прокси принимает внешний Origin и выдаёт Secure cookie", async () => {
+  const headers = { host: "demonstration.alwaysdata.net", "x-forwarded-proto": "https", origin: "https://demonstration.alwaysdata.net" };
+  const accepted = await call("/session", "POST", { password: "test-password" }, headers);
+  expect(accepted.status).toBe(200);
+  expect(accepted.headers.get("set-cookie")).toContain("; Secure");
+  const rejected = await call("/session", "POST", { password: "test-password" }, { ...headers, origin: "https://untrusted.example" });
+  expect(rejected.status).toBe(403);
+});
+
 test("каталог реальных компаний импортируется повторно без дублей и потери правок", async () => {
   const first = await call("/catalog/import", "POST", undefined, { cookie });
   expect((await first.json() as { added: number }).added).toBe(0);
