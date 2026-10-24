@@ -54,7 +54,7 @@ export type Supplier = {
   favorite: boolean;
   verified: boolean;
   workedWith: boolean;
-  contacts: { name: string; role: string; phone: string | null; email: string | null }[];
+  contacts: { name: string; role: string; phone: string | null; email: string | null; details?: string | null }[];
   notes: string | null;
   discoveredAt: string;
   verifiedAt: string | null;

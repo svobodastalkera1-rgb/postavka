@@ -17,7 +17,7 @@ export function supplierSearchRank(s: Supplier, query: string): number {
   const weighted: [string, number][] = [
     [s.name, 100], [s.legalName ?? "", 90], [s.inn ?? "", 85],
     [s.phone ?? "", 80], [s.email ?? "", 75],
-    ...contacts.flatMap((contact): [string, number][] => [[contact.name, 75], [contact.role, 55], [contact.phone ?? "", 70], [contact.email ?? "", 70]]),
+    ...contacts.flatMap((contact): [string, number][] => [[contact.name, 75], [contact.role, 55], [contact.phone ?? "", 70], [contact.email ?? "", 70], [contact.details ?? "", 30]]),
     [s.city, 50], [s.address ?? "", 45], [s.website ?? "", 40],
     ...[...s.regions, ...s.categories, ...s.assortment, ...s.documents].map((value): [string, number] => [value, 40]),
     [s.minOrder ?? "", 30], [s.delivery ?? "", 30], [s.notes ?? "", 15],

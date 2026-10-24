@@ -64,6 +64,12 @@ function Profile() {
     ["Юридическое лицо", s.legalName], ["ИНН", s.inn], ["Сайт", s.website && <a href={s.website} target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">{s.website}</a>],
     ["Адрес", s.address], ["Регионы работы", s.regions.join(", ")],
     ["Категории", s.categories.join(", ")],
+    ["Основной телефон", s.phone], ["Основной email", s.email],
+    ["Контактные лица", s.contacts.length ? <div className="space-y-2">{s.contacts.map((contact, index) => <div key={`${contact.name}-${index}`} className="rounded-md border p-2"><div className="font-medium">{contact.name}</div><div>{[contact.role, contact.phone, contact.email].filter(Boolean).join(" · ")}</div>{contact.details && <div className="whitespace-pre-wrap text-muted-foreground">{contact.details}</div>}</div>)}</div> : null],
+    ["Ассортимент", s.assortment.length ? s.assortment.join("; ") : null],
+    ["Цены", s.prices.length ? s.prices.map((price) => `${price.item}: ${price.price.toLocaleString("ru")} ₽ / ${price.unit}`).join("; ") : null],
+    ["Минимальный заказ", s.minOrder], ["Минимальный заказ, ₽", s.minOrderRub !== null ? `${s.minOrderRub.toLocaleString("ru")} ₽` : null],
+    ["Доставка", s.delivery], ["Наличие доставки", s.hasDelivery === null ? null : s.hasDelivery ? "Да" : "Нет"], ["Внутренние заметки", s.notes],
     ["Документы", s.documents.length ? s.documents.join("; ") : null], ["Дата обнаружения", s.discoveredAt], ["Последняя проверка", s.verifiedAt],
   ];
   const parts = [["Ассортимент", s.score.assortment, 30], ["Логистика", s.score.logistics, 20], ["Коммерческие условия", s.score.commercial, 20], ["Надёжность данных", s.score.reliability, 15], ["История сотрудничества", s.score.history, 15]] as const;
@@ -96,7 +102,7 @@ function Profile() {
         <Tabs defaultValue="info" className="lg:col-span-2">
           <TabsList><TabsTrigger value="info">Данные</TabsTrigger><TabsTrigger value="commerce">Коммерция</TabsTrigger><TabsTrigger value="contacts">Контакты</TabsTrigger><TabsTrigger value="timeline">Взаимодействия</TabsTrigger><TabsTrigger value="audit">Изменения</TabsTrigger></TabsList>
           <TabsContent value="info"><Card><CardContent className="divide-y pt-6">
-            {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">{k}</span><span><NoData value={v} /></span></div>)}
+            {rows.map(([k, v]) => <div key={k} className="grid grid-cols-[minmax(7rem,11rem)_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">{k}</span><span className="break-words"><NoData value={v} /></span></div>)}
             <div className="grid grid-cols-[11rem_1fr] gap-4 py-2.5 text-sm"><span className="text-muted-foreground">Источники</span><span className="space-y-1">{s.sources.length ? s.sources.map((x) => <span key={x.url} className="flex items-center gap-1 text-muted-foreground"><a href={x.url} target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">{x.url}</a> · {x.date}</span>) : <NoData value={null} />}</span></div>
             <Button variant="outline" size="sm" className="mt-4" onClick={() => setEditing("info")}>Редактировать данные</Button>
           </CardContent></Card></TabsContent>
@@ -110,7 +116,7 @@ function Profile() {
           <TabsContent value="contacts"><Card><CardContent className="space-y-3 pt-6 text-sm">
             <div><span className="text-muted-foreground">Основной телефон:</span> <NoData value={s.phone} /></div>
             <div><span className="text-muted-foreground">Основной email:</span> <NoData value={s.email} /></div>
-            {s.contacts.length ? s.contacts.map((c) => <div key={c.name} className="rounded-md border p-3"><div className="font-medium">{c.name}</div><div className="text-muted-foreground">{c.role}</div><div><NoData value={c.phone} /> · <NoData value={c.email} /></div></div>) : <NoData value={null} />}
+            {s.contacts.length ? s.contacts.map((c, index) => <div key={`${c.name}-${index}`} className="glass-card space-y-2 rounded-lg border p-4"><div className="font-medium">{c.name}</div><div className="text-muted-foreground"><NoData value={c.role} /></div><div className="grid gap-1 sm:grid-cols-2"><div><span className="text-muted-foreground">Телефон: </span><NoData value={c.phone} /></div><div><span className="text-muted-foreground">Email: </span><NoData value={c.email} /></div></div>{c.details && <p className="whitespace-pre-wrap border-t pt-2">{c.details}</p>}</div>) : <NoData value={null} />}
             <Button variant="outline" size="sm" onClick={() => setEditing("contacts")}>Редактировать контакты</Button>
           </CardContent></Card></TabsContent>
           <TabsContent value="timeline"><Card><CardContent className="space-y-4 pt-6">

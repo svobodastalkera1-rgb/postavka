@@ -49,7 +49,7 @@ const editSchema = z.object({
   hasDelivery: z.boolean().nullable(), documents: strings, rating: z.number().finite().min(0).max(5).nullable(),
   status: z.enum(["discovered","review","contact_planned","contacted","quote_requested","quote_received","negotiation","active","ended","rejected"]),
   blacklisted: z.object({ reason: short, author: short, date: short }).nullable(), favorite: z.boolean(), verified: z.boolean(), workedWith: z.boolean(),
-  contacts: z.array(z.object({ name: short.min(1), role: short, phone: optionalText, email: optionalText })).max(100),
+  contacts: z.array(z.object({ name: short.min(1), role: short, phone: optionalText, email: optionalText, details: z.string().max(2000).nullable().optional() })).max(100),
   notes: z.string().max(10000).nullable(), verifiedAt: optionalText,
   confidenceOverride: z.object({ value: z.number().int().min(0).max(100), reason: z.string().trim().min(3).max(500) }).nullable(),
   sources: z.array(z.object({ url: short, date: short })).max(100),

@@ -72,6 +72,19 @@ test("ручная достоверность меняет скоринг, за�
   expect((await reset.json() as { confidence: number }).confidence).toBe(0);
 });
 
+test("контактные лица сохраняются отдельными записями со свободным текстом", async () => {
+  const created = await call("/suppliers", "POST", { name: "Проверка контактов", city: "Екатеринбург", group: "food" }, { cookie });
+  const id = (await created.json() as { id: string }).id;
+  const contacts = [
+    { name: "Иванов Иван Иванович", role: "Маркетинг", phone: "+77777777777", email: null, details: "Предпочитает сообщения после 14:00.\nСвободный текст без разделителей | и пробелов." },
+    { name: "Мария Петрова", role: "Закупки", phone: null, email: "maria@example.test", details: null },
+  ];
+  const edited = await call(`/suppliers/${id}`, "PATCH", { contacts }, { cookie });
+  expect(edited.status).toBe(200);
+  const reopened = await call(`/suppliers/${id}`, "GET", undefined, { cookie });
+  expect((await reopened.json() as { contacts: typeof contacts }).contacts).toEqual(contacts);
+});
+
 test("вход через HTTPS-прокси принимает внешний Origin и выдаёт Secure cookie", async () => {
   const headers = { host: "demonstration.alwaysdata.net", "x-forwarded-proto": "https", origin: "https://demonstration.alwaysdata.net" };
   const accepted = await call("/session", "POST", { password: "test-password" }, headers);

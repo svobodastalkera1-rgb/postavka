@@ -26,7 +26,7 @@ export function SupplierEditor({ supplier, section, onOpenChange, onSaved }: { s
   useEffect(() => { if (section) setForm(supplier); }, [section, supplier]);
   const field = (key: keyof Supplier, label: string) => <div className="grid gap-1.5"><Label>{label}</Label><Input value={String(form[key] ?? "")} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value || null }))} /></div>;
   const list = (key: "regions" | "categories" | "assortment" | "documents", label: string) => <div className="grid gap-1.5"><Label>{label} (по одной строке)</Label><Textarea rows={4} className="min-h-28 resize-y" value={form[key].join("\n")} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean) }))} /></div>;
-  const contacts = form.contacts.map((c) => [c.name, c.role, c.phone ?? "", c.email ?? ""].join(" | ")).join("\n");
+  const updateContact = (index: number, changes: Partial<Supplier["contacts"][number]>) => setForm((old) => ({ ...old, contacts: old.contacts.map((contact, at) => at === index ? { ...contact, ...changes } : contact) }));
   const prices = form.prices.map((p) => [p.item, p.price, p.unit].join(" | ")).join("\n");
   const sources = form.sources.map((source) => [source.url, source.date].join(" | ")).join("\n");
   const save = async () => {
@@ -53,7 +53,18 @@ export function SupplierEditor({ supplier, section, onOpenChange, onSaved }: { s
     </div>}
     {section === "contacts" && <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">{field("phone", "Основной телефон")}{field("email", "Основной email")}</div>
-      <div className="grid gap-1.5"><Label>Контактные лица (имя | должность | телефон | email)</Label><Textarea rows={8} className="min-h-52 resize-y" value={contacts} onChange={(e) => setForm((old) => ({ ...old, contacts: e.target.value.split("\n").filter((line) => line.trim()).map((line) => { const [name, role, phone, email] = line.split("|").map((part) => part.trim()); return { name: name ?? "", role: role ?? "", phone: phone || null, email: email || null }; }) }))} /></div>
+      <div className="flex items-center justify-between gap-3"><h3 className="font-medium">Контактные лица</h3><Button type="button" variant="outline" size="sm" onClick={() => setForm((old) => ({ ...old, contacts: [...old.contacts, { name: "", role: "", phone: null, email: null, details: null }] }))}>Добавить контакт</Button></div>
+      {form.contacts.length === 0 && <p className="text-sm text-muted-foreground">Контактных лиц пока нет. Добавьте человека отдельной карточкой.</p>}
+      {form.contacts.map((contact, index) => <div key={index} className="glass-card space-y-3 rounded-lg border p-4">
+        <div className="flex items-center justify-between gap-3"><h4 className="font-medium">{contact.name.trim() || `Контакт ${index + 1}`}</h4><Button type="button" variant="ghost" size="sm" onClick={() => setForm((old) => ({ ...old, contacts: old.contacts.filter((_, at) => at !== index) }))}>Удалить</Button></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-1.5"><Label htmlFor={`contact-name-${index}`}>ФИО</Label><Input id={`contact-name-${index}`} value={contact.name} onChange={(e) => updateContact(index, { name: e.target.value })} /></div>
+          <div className="grid gap-1.5"><Label htmlFor={`contact-role-${index}`}>Должность</Label><Input id={`contact-role-${index}`} value={contact.role} onChange={(e) => updateContact(index, { role: e.target.value })} /></div>
+          <div className="grid gap-1.5"><Label htmlFor={`contact-phone-${index}`}>Телефон</Label><Input id={`contact-phone-${index}`} value={contact.phone ?? ""} onChange={(e) => updateContact(index, { phone: e.target.value || null })} /></div>
+          <div className="grid gap-1.5"><Label htmlFor={`contact-email-${index}`}>Email</Label><Input id={`contact-email-${index}`} value={contact.email ?? ""} onChange={(e) => updateContact(index, { email: e.target.value || null })} /></div>
+        </div>
+        <div className="grid gap-1.5"><Label htmlFor={`contact-details-${index}`}>Заметка о контакте — произвольный текст</Label><Textarea id={`contact-details-${index}`} rows={4} className="min-h-28 resize-y" value={contact.details ?? ""} onChange={(e) => updateContact(index, { details: e.target.value || null })} /></div>
+      </div>)}
     </div>}
     {section === "notes" && <div className="grid gap-1.5"><Label>Внутренние заметки</Label><Textarea rows={12} className="min-h-64 resize-y" value={form.notes ?? ""} onChange={(e) => setForm((old) => ({ ...old, notes: e.target.value || null }))} /></div>}
     {section === "score" && <div className="space-y-4 text-sm">
@@ -64,6 +75,6 @@ export function SupplierEditor({ supplier, section, onOpenChange, onSaved }: { s
       {form.confidenceOverride && <div className="grid gap-3 sm:grid-cols-[10rem_1fr]"><div className="grid gap-1.5"><Label>Значение, 0–100%</Label><Input type="number" min="0" max="100" value={form.confidenceOverride.value} onChange={(e) => setForm((old) => ({ ...old, confidenceOverride: { value: Number(e.target.value), reason: old.confidenceOverride?.reason ?? "" } }))} /></div><div className="grid gap-1.5"><Label>Причина изменения</Label><Input value={form.confidenceOverride.reason} onChange={(e) => setForm((old) => ({ ...old, confidenceOverride: { value: old.confidenceOverride?.value ?? old.confidence, reason: e.target.value } }))} /></div></div>}
       <p className="text-xs text-muted-foreground">Ручная достоверность влияет на оценку надёжности данных. Значение и причина сохраняются в истории изменений.</p>
     </div>}
-    <DialogFooter><Button onClick={save} disabled={section === "info" && (!form.name.trim() || !form.city.trim()) || section === "score" && !!form.confidenceOverride && form.confidenceOverride.reason.trim().length < 3}>Сохранить блок</Button></DialogFooter>
+    <DialogFooter><Button onClick={save} disabled={section === "info" && (!form.name.trim() || !form.city.trim()) || section === "contacts" && form.contacts.some((contact) => !contact.name.trim()) || section === "score" && !!form.confidenceOverride && form.confidenceOverride.reason.trim().length < 3}>Сохранить блок</Button></DialogFooter>
   </DialogContent></Dialog>;
 }
