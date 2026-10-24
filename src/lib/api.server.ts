@@ -5,7 +5,9 @@ import { z } from "zod";
 
 const json = (value: unknown, status = 200, headers?: HeadersInit) => Response.json(value, { status, headers: { "Cache-Control": "no-store", ...headers } });
 const unauthorized = () => json({ error: "Требуется вход" }, 401);
-const secret = () => process.env['POSTAVKA_SESSION_SECRET'];
+const configuredSecret = (value: string | undefined, minimumLength: number) =>
+  value && value.length >= minimumLength && !/[<>]/.test(value) && !/новый отдельный|другая случайная/i.test(value) ? value : null;
+const secret = () => configuredSecret(process.env['POSTAVKA_SESSION_SECRET'], 32);
 function publicOrigin(request: Request, url: URL) {
   const forwardedProto = request.headers.get("x-forwarded-proto");
   const host = request.headers.get("host");
@@ -74,7 +76,7 @@ export async function api(request: Request): Promise<Response | null> {
     if (request.method === "DELETE") return json({ authenticated: false }, 200, { "Set-Cookie": "postavka_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0" });
     if (request.method === "POST") {
       const data = await body(request);
-      const password = process.env['POSTAVKA_EDITOR_PASSWORD'];
+      const password = configuredSecret(process.env['POSTAVKA_EDITOR_PASSWORD'], 16);
       if (!password || !secret() || typeof data?.['password'] !== "string" || !equal(data['password'], password)) return unauthorized();
       const name = encodeURIComponent(typeof data['name'] === "string" && data['name'].trim() ? data['name'].trim().slice(0, 80) : "Сотрудник").replaceAll(".", "%2E");
       const expiry = String(Date.now() + 12 * 60 * 60 * 1000);
@@ -132,4 +134,5 @@ export async function api(request: Request): Promise<Response | null> {
   }
   return json({ error: "Метод не поддерживается" }, 405);
 }
+
 

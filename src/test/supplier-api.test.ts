@@ -17,12 +17,12 @@ async function call(path: string, method = "GET", data?: unknown, headers: Recor
 beforeAll(async () => {
   folder = mkdtempSync(join(tmpdir(), "postavka-test-"));
   process.env["POSTAVKA_DB_PATH"] = join(folder, "test.sqlite");
-  process.env["POSTAVKA_EDITOR_PASSWORD"] = "test-password";
+  process.env["POSTAVKA_EDITOR_PASSWORD"] = "test-password-long-enough";
   process.env["POSTAVKA_SESSION_SECRET"] = "test-secret-at-least-thirty-two-characters";
   process.env["POSTAVKA_INTEGRATION_TOKEN"] = "integration-test-token";
   ({ api } = await import("../lib/api.server"));
   ({ closeStore } = await import("../lib/store.server"));
-  const response = await call("/session", "POST", { name: "Тестовый сотрудник", password: "test-password" });
+  const response = await call("/session", "POST", { name: "Тестовый сотрудник", password: "test-password-long-enough" });
   cookie = response.headers.get("set-cookie")!.split(";")[0]!;
 });
 afterAll(() => { closeStore(); rmSync(folder, { recursive: true, force: true }); });
@@ -87,11 +87,21 @@ test("контактные лица сохраняются отдельными 
 
 test("вход через HTTPS-прокси принимает внешний Origin и выдаёт Secure cookie", async () => {
   const headers = { host: "demonstration.alwaysdata.net", "x-forwarded-proto": "https", origin: "https://demonstration.alwaysdata.net" };
-  const accepted = await call("/session", "POST", { password: "test-password" }, headers);
+  const accepted = await call("/session", "POST", { password: "test-password-long-enough" }, headers);
   expect(accepted.status).toBe(200);
   expect(accepted.headers.get("set-cookie")).toContain("; Secure");
-  const rejected = await call("/session", "POST", { password: "test-password" }, { ...headers, origin: "https://untrusted.example" });
+  const rejected = await call("/session", "POST", { password: "test-password-long-enough" }, { ...headers, origin: "https://untrusted.example" });
   expect(rejected.status).toBe(403);
+});
+
+test("шаблонные значения окружения не открывают доступ редактора", async () => {
+  const previous = process.env["POSTAVKA_EDITOR_PASSWORD"];
+  process.env["POSTAVKA_EDITOR_PASSWORD"] = "<новый отдельный сильный пароль1>";
+  try {
+    expect((await call("/session", "POST", { password: "<новый отдельный сильный пароль1>" })).status).toBe(401);
+  } finally {
+    process.env["POSTAVKA_EDITOR_PASSWORD"] = previous;
+  }
 });
 
 test("каталог реальных компаний импортируется повторно без дублей и потери правок", async () => {
@@ -104,3 +114,4 @@ test("каталог реальных компаний импортируетс�
   const after = await call("/suppliers/cupmaster", "GET", undefined, { cookie });
   expect((await after.json() as { minOrder: string }).minOrder).toBe("Согласовано по телефону");
 });
+
