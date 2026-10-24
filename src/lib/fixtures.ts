@@ -47,6 +47,8 @@ export type Supplier = {
   rating: number | null;
   score: { assortment: number; logistics: number; commercial: number; reliability: number; history: number | null };
   confidence: number;
+  confidenceOverride?: { value: number; reason: string } | null;
+  updatedAt?: string;
   status: Status;
   blacklisted: { reason: string; author: string; date: string } | null;
   favorite: boolean;

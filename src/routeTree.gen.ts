@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AiSearchRouteImport } from './routes/ai-search'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BlacklistRouteImport } from './routes/blacklist'
 import { Route as CompareRouteImport } from './routes/compare'
@@ -41,6 +42,11 @@ const AiSearchRoute = AiSearchRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDocsRoute = ApiDocsRouteImport.update({
+  id: '/api-docs',
+  path: '/api-docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/ai-search': typeof AiSearchRoute
   '/analytics': typeof AnalyticsRoute
+  '/api-docs': typeof ApiDocsRoute
   '/auth': typeof AuthRoute
   '/blacklist': typeof BlacklistRoute
   '/compare': typeof CompareRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/ai-search': typeof AiSearchRoute
   '/analytics': typeof AnalyticsRoute
+  '/api-docs': typeof ApiDocsRoute
   '/auth': typeof AuthRoute
   '/blacklist': typeof BlacklistRoute
   '/compare': typeof CompareRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/ai-search': typeof AiSearchRoute
   '/analytics': typeof AnalyticsRoute
+  '/api-docs': typeof ApiDocsRoute
   '/auth': typeof AuthRoute
   '/blacklist': typeof BlacklistRoute
   '/compare': typeof CompareRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai-search'
     | '/analytics'
+    | '/api-docs'
     | '/auth'
     | '/blacklist'
     | '/compare'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai-search'
     | '/analytics'
+    | '/api-docs'
     | '/auth'
     | '/blacklist'
     | '/compare'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai-search'
     | '/analytics'
+    | '/api-docs'
     | '/auth'
     | '/blacklist'
     | '/compare'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AiSearchRoute: typeof AiSearchRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  ApiDocsRoute: typeof ApiDocsRoute
   AuthRoute: typeof AuthRoute
   BlacklistRoute: typeof BlacklistRoute
   CompareRoute: typeof CompareRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api-docs': {
+      id: '/api-docs'
+      path: '/api-docs'
+      fullPath: '/api-docs'
+      preLoaderRoute: typeof ApiDocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AiSearchRoute: AiSearchRoute,
   AnalyticsRoute: AnalyticsRoute,
+  ApiDocsRoute: ApiDocsRoute,
   AuthRoute: AuthRoute,
   BlacklistRoute: BlacklistRoute,
   CompareRoute: CompareRoute,

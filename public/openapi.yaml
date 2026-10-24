@@ -27,6 +27,14 @@ components:
           type: string
           enum: [discovered, review, contact_planned, contacted, quote_requested, quote_received, negotiation, active, ended, rejected]
         updatedAt: { type: string, format: date-time }
+        confidence: { type: integer, minimum: 0, maximum: 100, description: Расчётная или вручную заданная достоверность данных }
+        confidenceOverride:
+          type: object
+          nullable: true
+          description: Ручное переопределение с обязательной причиной; скрыто для анонимных запросов
+          properties:
+            value: { type: integer, minimum: 0, maximum: 100 }
+            reason: { type: string }
         notes: { type: string, nullable: true, description: Скрыто для анонимных запросов }
         contacts: { type: array, items: { type: object }, description: Скрыто для анонимных запросов }
         prices: { type: array, items: { type: object }, description: Скрыто для анонимных запросов }

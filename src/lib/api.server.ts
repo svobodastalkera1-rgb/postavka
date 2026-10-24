@@ -31,7 +31,7 @@ function integration(request: Request): boolean {
 }
 function actor(request: Request) { return employee(request) ?? (integration(request) ? "integration" : null); }
 function visible(s: Supplier, authorized: boolean): Supplier {
-  return authorized ? s : { ...s, notes: null, contacts: [], prices: [], rating: null };
+  return authorized ? s : { ...s, notes: null, contacts: [], prices: [], rating: null, confidenceOverride: null };
 }
 async function body(request: Request): Promise<Record<string, unknown> | null> {
   try { const data = await request.json(); return data && typeof data === "object" && !Array.isArray(data) ? data : null; } catch { return null; }
@@ -51,6 +51,7 @@ const editSchema = z.object({
   blacklisted: z.object({ reason: short, author: short, date: short }).nullable(), favorite: z.boolean(), verified: z.boolean(), workedWith: z.boolean(),
   contacts: z.array(z.object({ name: short.min(1), role: short, phone: optionalText, email: optionalText })).max(100),
   notes: z.string().max(10000).nullable(), verifiedAt: optionalText,
+  confidenceOverride: z.object({ value: z.number().int().min(0).max(100), reason: z.string().trim().min(3).max(500) }).nullable(),
   sources: z.array(z.object({ url: short, date: short })).max(100),
 }).partial().strict();
 function patchSupplier(previous: Supplier, data: Record<string, unknown>): Supplier | null {
@@ -106,7 +107,7 @@ export async function api(request: Request): Promise<Response | null> {
   if (request.method === "POST" && !id) {
     const data = await body(request);
     if (!data) return json({ error: "Некорректный JSON" }, 400);
-    const blank: Supplier = { group: "food", id: randomUUID(), name: "", legalName: null, inn: null, website: null, phone: null, email: null, address: null, city: "Екатеринбург", regions: [], categories: [], assortment: [], prices: [], minOrder: null, minOrderRub: null, delivery: null, hasDelivery: null, documents: [], rating: null, score: { assortment: 0, logistics: 0, commercial: 0, reliability: 0, history: null }, confidence: 0, status: "discovered", blacklisted: null, favorite: false, verified: false, workedWith: false, contacts: [], notes: null, discoveredAt: new Date().toISOString().slice(0, 10), verifiedAt: null, sources: [] };
+    const blank: Supplier = { group: "food", id: randomUUID(), name: "", legalName: null, inn: null, website: null, phone: null, email: null, address: null, city: "Екатеринбург", regions: [], categories: [], assortment: [], prices: [], minOrder: null, minOrderRub: null, delivery: null, hasDelivery: null, documents: [], rating: null, score: { assortment: 0, logistics: 0, commercial: 0, reliability: 0, history: null }, confidence: 0, confidenceOverride: null, status: "discovered", blacklisted: null, favorite: false, verified: false, workedWith: false, contacts: [], notes: null, discoveredAt: new Date().toISOString().slice(0, 10), verifiedAt: null, sources: [] };
     const supplier = patchSupplier(blank, data);
     return supplier ? json(saveSupplier(supplier, who, integration(request) ? "external integration" : "employee"), 201) : json({ error: "Некорректные поля" }, 400);
   }

@@ -45,7 +45,7 @@ export function Admin() {
       </CardContent></Card>
       <Card><CardHeader><CardTitle className="text-base">Интеграции</CardTitle></CardHeader><CardContent className="space-y-2 text-sm text-muted-foreground">
         <p>Карточки поставщиков доступны через REST API приложения. Отдельные ключи для внешних систем и управление ими ещё не реализованы.</p>
-        <Button asChild variant="outline" size="sm"><a href="/openapi.yaml" target="_blank" rel="noreferrer">Открыть OpenAPI</a></Button>
+        <Button asChild variant="outline" size="sm"><Link to="/api-docs">Открыть OpenAPI</Link></Button>
       </CardContent></Card>
     </div>
   </>;

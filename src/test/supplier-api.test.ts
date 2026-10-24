@@ -56,6 +56,22 @@ test("аноним не может изменять карточку или чи
   expect((await publicSupplier.json() as { contacts: unknown[]; notes: unknown }).contacts).toEqual([]);
 });
 
+test("ручная достоверность меняет скоринг, записывается в историю и скрыта от гостя", async () => {
+  const created = await call("/suppliers", "POST", { name: "Проверка оценки", city: "Екатеринбург", group: "food" }, { cookie });
+  const id = (await created.json() as { id: string }).id;
+  const edited = await call(`/suppliers/${id}`, "PATCH", { confidenceOverride: { value: 83, reason: "Проверено по документам" } }, { cookie });
+  expect(edited.status).toBe(200);
+  const result = await edited.json() as { confidence: number; score: { reliability: number } };
+  expect(result.confidence).toBe(83);
+  expect(result.score.reliability).toBe(58);
+  const changes = await call(`/suppliers/${id}/changes`, "GET", undefined, { cookie });
+  expect((await changes.json() as { field: string }[]).some((change) => change.field === "confidenceOverride")).toBe(true);
+  const guest = await call(`/suppliers/${id}`);
+  expect((await guest.json() as { confidenceOverride: unknown }).confidenceOverride).toBeNull();
+  const reset = await call(`/suppliers/${id}`, "PATCH", { confidenceOverride: null }, { cookie });
+  expect((await reset.json() as { confidence: number }).confidence).toBe(0);
+});
+
 test("вход через HTTPS-прокси принимает внешний Origin и выдаёт Secure cookie", async () => {
   const headers = { host: "demonstration.alwaysdata.net", "x-forwarded-proto": "https", origin: "https://demonstration.alwaysdata.net" };
   const accepted = await call("/session", "POST", { password: "test-password" }, headers);
