@@ -47,12 +47,14 @@ export type Supplier = {
   rating: number | null;
   score: { assortment: number; logistics: number; commercial: number; reliability: number; history: number | null };
   confidence: number;
+  confidenceOverride?: { value: number; reason: string } | null;
+  updatedAt?: string;
   status: Status;
   blacklisted: { reason: string; author: string; date: string } | null;
   favorite: boolean;
   verified: boolean;
   workedWith: boolean;
-  contacts: { name: string; role: string; phone: string | null; email: string | null }[];
+  contacts: { name: string; role: string; phone: string | null; email: string | null; details?: string | null }[];
   notes: string | null;
   discoveredAt: string;
   verifiedAt: string | null;

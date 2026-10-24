@@ -14,6 +14,7 @@ import { Plus, Database, Columns3, Star, Clover } from "lucide-react";
 import { toast } from "sonner";
 import { createSupplier, request, suppliers } from "@/lib/api-client";
 import type { Supplier } from "@/lib/fixtures";
+import { supplierSearchRank } from "@/lib/supplier-search";
 
 export const Route = createFileRoute("/suppliers/")({
   head: () => meta("Каталог поставщиков", "Поиск и фильтрация поставщиков во внутренней базе."),
@@ -25,7 +26,16 @@ const ALL = "all";
 export function Directory() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Supplier[]>([]);
-  useEffect(() => { suppliers().then((data) => setItems(data.items)).catch((error) => toast.error(error.message)); }, []);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const load = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try { setItems((await suppliers()).items); }
+    catch (error) { setLoadError((error as Error).message); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, []);
   const [view, setView] = useState("all");
   const [q, setQ] = useState("");
   const [group, setGroup] = useState(ALL);
@@ -35,18 +45,18 @@ export function Directory() {
   const [delivery, setDelivery] = useState(false);
   const [verified, setVerified] = useState(false);
   const [hideBl, setHideBl] = useState(true);
-  const [sort, setSort] = useState("score");
+  const [sort, setSort] = useState("updated");
   const [sel, setSel] = useState<string[]>([]);
   const cities = [...new Set(items.map((s) => s.city))];
   const regions = [...new Set(items.flatMap((s) => s.regions))];
 
   const rows = useMemo(() => {
-    const t = q.toLowerCase();
+    const t = q.trim();
     return items.filter((s) =>
-      (!t || [s.name, s.city, ...s.regions, ...s.assortment, ...s.categories].join(" ").toLowerCase().includes(t)) &&
+      supplierSearchRank(s, t) > 0 &&
       (group === ALL || s.group === group) && (status === ALL || s.status === status) && (city === ALL || s.city === city) && (region === ALL || s.regions.includes(region)) &&
       (view !== "favorites" || s.favorite) && (view !== "blacklist" || s.blacklisted) && (!delivery || s.hasDelivery) && (!verified || s.verified) && (view === "blacklist" || !hideBl || !s.blacklisted),
-    ).sort((a, b) => sort === "score" ? totalScore(b) - totalScore(a) : sort === "name" ? a.name.localeCompare(b.name) : b.discoveredAt.localeCompare(a.discoveredAt));
+    ).sort((a, b) => t ? supplierSearchRank(b, t) - supplierSearchRank(a, t) || (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "") : sort === "updated" ? (b.updatedAt ?? b.discoveredAt).localeCompare(a.updatedAt ?? a.discoveredAt) : sort === "score" ? totalScore(b) - totalScore(a) : sort === "name" ? a.name.localeCompare(b.name) : b.discoveredAt.localeCompare(a.discoveredAt));
   }, [items, q, group, status, city, region, delivery, verified, hideBl, sort, view]);
 
   const toggle = (id: string) => setSel((p) => p.includes(id) ? p.filter((x) => x !== id) : p.length < 4 ? [...p, id] : p);
@@ -66,9 +76,11 @@ export function Directory() {
           <Button variant="outline" onClick={importVerified}><Database />Импортировать каталог</Button>
           <NewSupplierDialog onCreated={(item) => setItems((all) => [item, ...all])} />
         </>} />
+      {loading && <p role="status" className="mb-4 text-sm text-muted-foreground">Загружаем каталог…</p>}
+      {loadError && <div role="alert" className="mb-4 rounded-lg border border-destructive p-4 text-sm">Каталог не загрузился: {loadError} <Button variant="outline" size="sm" onClick={load}>Повторить</Button></div>}
       <div className="glass-card grid gap-3 rounded-lg border p-4 md:grid-cols-4">
         <Select value={view} onValueChange={setView}><SelectTrigger aria-label="Список поставщиков"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Все поставщики</SelectItem><SelectItem value="favorites">Избранное</SelectItem><SelectItem value="blacklist">Чёрный список</SelectItem></SelectContent></Select>
-        <Input aria-label="Поиск по каталогу" placeholder="Название, товар, ключевое слово…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
+        <Input aria-label="Поиск по каталогу" placeholder="Компания, ИНН, телефон или контакт…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
         <Select value={group} onValueChange={setGroup}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
           <SelectItem value={ALL}>Все категории</SelectItem>
           {Object.entries(CATEGORIES).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
@@ -86,7 +98,7 @@ export function Directory() {
           {[...PIPELINE, "rejected", "ended"].map((s) => <SelectItem key={s} value={s}>{STATUS_LABELS[s as keyof typeof STATUS_LABELS]}</SelectItem>)}
         </SelectContent></Select>
         <Select value={sort} onValueChange={setSort}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
-          <SelectItem value="score">По оценке</SelectItem><SelectItem value="name">По названию</SelectItem><SelectItem value="date">По дате обнаружения</SelectItem>
+          <SelectItem value="updated">Недавно изменённые</SelectItem><SelectItem value="score">По оценке</SelectItem><SelectItem value="name">По названию</SelectItem><SelectItem value="date">По дате обнаружения</SelectItem>
         </SelectContent></Select>
         <div className="flex flex-wrap items-center gap-4 text-sm md:col-span-2">
           {[["С доставкой", delivery, setDelivery], ["Только проверенные", verified, setVerified], ["Скрыть чёрный список", hideBl, setHideBl]].map(([l, v, f]) => (
@@ -102,7 +114,7 @@ export function Directory() {
         </div>
       )}
 
-      <div className="glass-card mt-4 overflow-x-auto rounded-lg border">
+      {!loading && !loadError && <><div className="glass-card mt-4 overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader><TableRow>
             <TableHead className="w-10" /><TableHead>Поставщик</TableHead><TableHead>Категории</TableHead><TableHead>Город</TableHead>
@@ -130,6 +142,7 @@ export function Directory() {
         </Table>
       </div>
       <div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>Показано {rows.length} из {items.length}</span><span>Страница 1 из 1</span></div>
+      </>}
     </>
   );
 }
@@ -158,3 +171,4 @@ function NewSupplierDialog({ onCreated }: { onCreated: (item: Supplier) => void 
     </Dialog>
   );
 }
+

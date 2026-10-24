@@ -17,12 +17,12 @@ async function call(path: string, method = "GET", data?: unknown, headers: Recor
 beforeAll(async () => {
   folder = mkdtempSync(join(tmpdir(), "postavka-test-"));
   process.env["POSTAVKA_DB_PATH"] = join(folder, "test.sqlite");
-  process.env["POSTAVKA_EDITOR_PASSWORD"] = "test-password";
+  process.env["POSTAVKA_EDITOR_PASSWORD"] = "test-password-long-enough";
   process.env["POSTAVKA_SESSION_SECRET"] = "test-secret-at-least-thirty-two-characters";
   process.env["POSTAVKA_INTEGRATION_TOKEN"] = "integration-test-token";
   ({ api } = await import("../lib/api.server"));
   ({ closeStore } = await import("../lib/store.server"));
-  const response = await call("/session", "POST", { name: "Тестовый сотрудник", password: "test-password" });
+  const response = await call("/session", "POST", { name: "Тестовый сотрудник", password: "test-password-long-enough" });
   cookie = response.headers.get("set-cookie")!.split(";")[0]!;
 });
 afterAll(() => { closeStore(); rmSync(folder, { recursive: true, force: true }); });
@@ -56,6 +56,54 @@ test("аноним не может изменять карточку или чи
   expect((await publicSupplier.json() as { contacts: unknown[]; notes: unknown }).contacts).toEqual([]);
 });
 
+test("ручная достоверность меняет скоринг, записывается в историю и скрыта от гостя", async () => {
+  const created = await call("/suppliers", "POST", { name: "Проверка оценки", city: "Екатеринбург", group: "food" }, { cookie });
+  const id = (await created.json() as { id: string }).id;
+  const edited = await call(`/suppliers/${id}`, "PATCH", { confidenceOverride: { value: 83, reason: "Проверено по документам" } }, { cookie });
+  expect(edited.status).toBe(200);
+  const result = await edited.json() as { confidence: number; score: { reliability: number } };
+  expect(result.confidence).toBe(83);
+  expect(result.score.reliability).toBe(58);
+  const changes = await call(`/suppliers/${id}/changes`, "GET", undefined, { cookie });
+  expect((await changes.json() as { field: string }[]).some((change) => change.field === "confidenceOverride")).toBe(true);
+  const guest = await call(`/suppliers/${id}`);
+  expect((await guest.json() as { confidenceOverride: unknown }).confidenceOverride).toBeNull();
+  const reset = await call(`/suppliers/${id}`, "PATCH", { confidenceOverride: null }, { cookie });
+  expect((await reset.json() as { confidence: number }).confidence).toBe(0);
+});
+
+test("контактные лица сохраняются отдельными записями со свободным текстом", async () => {
+  const created = await call("/suppliers", "POST", { name: "Проверка контактов", city: "Екатеринбург", group: "food" }, { cookie });
+  const id = (await created.json() as { id: string }).id;
+  const contacts = [
+    { name: "Иванов Иван Иванович", role: "Маркетинг", phone: "+77777777777", email: null, details: "Предпочитает сообщения после 14:00.\nСвободный текст без разделителей | и пробелов." },
+    { name: "Мария Петрова", role: "Закупки", phone: null, email: "maria@example.test", details: null },
+  ];
+  const edited = await call(`/suppliers/${id}`, "PATCH", { contacts }, { cookie });
+  expect(edited.status).toBe(200);
+  const reopened = await call(`/suppliers/${id}`, "GET", undefined, { cookie });
+  expect((await reopened.json() as { contacts: typeof contacts }).contacts).toEqual(contacts);
+});
+
+test("вход через HTTPS-прокси принимает внешний Origin и выдаёт Secure cookie", async () => {
+  const headers = { host: "demonstration.alwaysdata.net", "x-forwarded-proto": "https", origin: "https://demonstration.alwaysdata.net" };
+  const accepted = await call("/session", "POST", { password: "test-password-long-enough" }, headers);
+  expect(accepted.status).toBe(200);
+  expect(accepted.headers.get("set-cookie")).toContain("; Secure");
+  const rejected = await call("/session", "POST", { password: "test-password-long-enough" }, { ...headers, origin: "https://untrusted.example" });
+  expect(rejected.status).toBe(403);
+});
+
+test("шаблонные значения окружения не открывают доступ редактора", async () => {
+  const previous = process.env["POSTAVKA_EDITOR_PASSWORD"];
+  process.env["POSTAVKA_EDITOR_PASSWORD"] = "<новый отдельный сильный пароль1>";
+  try {
+    expect((await call("/session", "POST", { password: "<новый отдельный сильный пароль1>" })).status).toBe(401);
+  } finally {
+    process.env["POSTAVKA_EDITOR_PASSWORD"] = previous;
+  }
+});
+
 test("каталог реальных компаний импортируется повторно без дублей и потери правок", async () => {
   const first = await call("/catalog/import", "POST", undefined, { cookie });
   expect((await first.json() as { added: number }).added).toBe(0);
@@ -66,3 +114,4 @@ test("каталог реальных компаний импортируетс�
   const after = await call("/suppliers/cupmaster", "GET", undefined, { cookie });
   expect((await after.json() as { minOrder: string }).minOrder).toBe("Согласовано по телефону");
 });
+

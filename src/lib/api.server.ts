@@ -5,7 +5,14 @@ import { z } from "zod";
 
 const json = (value: unknown, status = 200, headers?: HeadersInit) => Response.json(value, { status, headers: { "Cache-Control": "no-store", ...headers } });
 const unauthorized = () => json({ error: "Требуется вход" }, 401);
-const secret = () => process.env['POSTAVKA_SESSION_SECRET'];
+const configuredSecret = (value: string | undefined, minimumLength: number) =>
+  value && value.length >= minimumLength && !/[<>]/.test(value) && !/новый отдельный|другая случайная/i.test(value) ? value : null;
+const secret = () => configuredSecret(process.env['POSTAVKA_SESSION_SECRET'], 32);
+function publicOrigin(request: Request, url: URL) {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("host");
+  return forwardedProto === "https" && host ? `https://${host}` : url.origin;
+}
 
 function equal(a: string, b: string) {
   const aa = Buffer.from(a), bb = Buffer.from(b);
@@ -26,7 +33,7 @@ function integration(request: Request): boolean {
 }
 function actor(request: Request) { return employee(request) ?? (integration(request) ? "integration" : null); }
 function visible(s: Supplier, authorized: boolean): Supplier {
-  return authorized ? s : { ...s, notes: null, contacts: [], prices: [], rating: null };
+  return authorized ? s : { ...s, notes: null, contacts: [], prices: [], rating: null, confidenceOverride: null };
 }
 async function body(request: Request): Promise<Record<string, unknown> | null> {
   try { const data = await request.json(); return data && typeof data === "object" && !Array.isArray(data) ? data : null; } catch { return null; }
@@ -44,8 +51,9 @@ const editSchema = z.object({
   hasDelivery: z.boolean().nullable(), documents: strings, rating: z.number().finite().min(0).max(5).nullable(),
   status: z.enum(["discovered","review","contact_planned","contacted","quote_requested","quote_received","negotiation","active","ended","rejected"]),
   blacklisted: z.object({ reason: short, author: short, date: short }).nullable(), favorite: z.boolean(), verified: z.boolean(), workedWith: z.boolean(),
-  contacts: z.array(z.object({ name: short.min(1), role: short, phone: optionalText, email: optionalText })).max(100),
+  contacts: z.array(z.object({ name: short.min(1), role: short, phone: optionalText, email: optionalText, details: z.string().max(2000).nullable().optional() })).max(100),
   notes: z.string().max(10000).nullable(), verifiedAt: optionalText,
+  confidenceOverride: z.object({ value: z.number().int().min(0).max(100), reason: z.string().trim().min(3).max(500) }).nullable(),
   sources: z.array(z.object({ url: short, date: short })).max(100),
 }).partial().strict();
 function patchSupplier(previous: Supplier, data: Record<string, unknown>): Supplier | null {
@@ -60,7 +68,7 @@ export async function api(request: Request): Promise<Response | null> {
   if (!url.pathname.startsWith("/api/")) return null;
   if (!["GET", "HEAD"].includes(request.method) && !integration(request)) {
     const origin = request.headers.get("origin");
-    if (origin && origin !== url.origin) return json({ error: "Недопустимый источник запроса" }, 403);
+    if (origin && origin !== publicOrigin(request, url)) return json({ error: "Недопустимый источник запроса" }, 403);
   }
   const path = url.pathname.split("/").filter(Boolean);
   if (path[1] === "session") {
@@ -68,12 +76,12 @@ export async function api(request: Request): Promise<Response | null> {
     if (request.method === "DELETE") return json({ authenticated: false }, 200, { "Set-Cookie": "postavka_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0" });
     if (request.method === "POST") {
       const data = await body(request);
-      const password = process.env['POSTAVKA_EDITOR_PASSWORD'];
+      const password = configuredSecret(process.env['POSTAVKA_EDITOR_PASSWORD'], 16);
       if (!password || !secret() || typeof data?.['password'] !== "string" || !equal(data['password'], password)) return unauthorized();
       const name = encodeURIComponent(typeof data['name'] === "string" && data['name'].trim() ? data['name'].trim().slice(0, 80) : "Сотрудник").replaceAll(".", "%2E");
       const expiry = String(Date.now() + 12 * 60 * 60 * 1000);
       const value = `${name}.${expiry}.${signed(`${name}.${expiry}`)}`;
-      return json({ authenticated: true }, 200, { "Set-Cookie": `postavka_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${url.protocol === "https:" ? "; Secure" : ""}` });
+      return json({ authenticated: true }, 200, { "Set-Cookie": `postavka_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${publicOrigin(request, url).startsWith("https:") ? "; Secure" : ""}` });
     }
   }
   if (path[1] === "catalog" && path[2] === "import" && request.method === "POST") return employee(request) ? json(importCatalog()) : unauthorized();
@@ -101,7 +109,7 @@ export async function api(request: Request): Promise<Response | null> {
   if (request.method === "POST" && !id) {
     const data = await body(request);
     if (!data) return json({ error: "Некорректный JSON" }, 400);
-    const blank: Supplier = { group: "food", id: randomUUID(), name: "", legalName: null, inn: null, website: null, phone: null, email: null, address: null, city: "Екатеринбург", regions: [], categories: [], assortment: [], prices: [], minOrder: null, minOrderRub: null, delivery: null, hasDelivery: null, documents: [], rating: null, score: { assortment: 0, logistics: 0, commercial: 0, reliability: 0, history: null }, confidence: 0, status: "discovered", blacklisted: null, favorite: false, verified: false, workedWith: false, contacts: [], notes: null, discoveredAt: new Date().toISOString().slice(0, 10), verifiedAt: null, sources: [] };
+    const blank: Supplier = { group: "food", id: randomUUID(), name: "", legalName: null, inn: null, website: null, phone: null, email: null, address: null, city: "Екатеринбург", regions: [], categories: [], assortment: [], prices: [], minOrder: null, minOrderRub: null, delivery: null, hasDelivery: null, documents: [], rating: null, score: { assortment: 0, logistics: 0, commercial: 0, reliability: 0, history: null }, confidence: 0, confidenceOverride: null, status: "discovered", blacklisted: null, favorite: false, verified: false, workedWith: false, contacts: [], notes: null, discoveredAt: new Date().toISOString().slice(0, 10), verifiedAt: null, sources: [] };
     const supplier = patchSupplier(blank, data);
     return supplier ? json(saveSupplier(supplier, who, integration(request) ? "external integration" : "employee"), 201) : json({ error: "Некорректные поля" }, 400);
   }
@@ -126,4 +134,5 @@ export async function api(request: Request): Promise<Response | null> {
   }
   return json({ error: "Метод не поддерживается" }, 405);
 }
+
 
