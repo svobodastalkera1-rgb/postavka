@@ -26,7 +26,16 @@ const ALL = "all";
 export function Directory() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Supplier[]>([]);
-  useEffect(() => { suppliers().then((data) => setItems(data.items)).catch((error) => toast.error(error.message)); }, []);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const load = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try { setItems((await suppliers()).items); }
+    catch (error) { setLoadError((error as Error).message); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, []);
   const [view, setView] = useState("all");
   const [q, setQ] = useState("");
   const [group, setGroup] = useState(ALL);
@@ -67,6 +76,8 @@ export function Directory() {
           <Button variant="outline" onClick={importVerified}><Database />Импортировать каталог</Button>
           <NewSupplierDialog onCreated={(item) => setItems((all) => [item, ...all])} />
         </>} />
+      {loading && <p role="status" className="mb-4 text-sm text-muted-foreground">Загружаем каталог…</p>}
+      {loadError && <div role="alert" className="mb-4 rounded-lg border border-destructive p-4 text-sm">Каталог не загрузился: {loadError} <Button variant="outline" size="sm" onClick={load}>Повторить</Button></div>}
       <div className="glass-card grid gap-3 rounded-lg border p-4 md:grid-cols-4">
         <Select value={view} onValueChange={setView}><SelectTrigger aria-label="Список поставщиков"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Все поставщики</SelectItem><SelectItem value="favorites">Избранное</SelectItem><SelectItem value="blacklist">Чёрный список</SelectItem></SelectContent></Select>
         <Input aria-label="Поиск по каталогу" placeholder="Компания, ИНН, телефон или контакт…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
@@ -103,7 +114,7 @@ export function Directory() {
         </div>
       )}
 
-      <div className="glass-card mt-4 overflow-x-auto rounded-lg border">
+      {!loading && !loadError && <><div className="glass-card mt-4 overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader><TableRow>
             <TableHead className="w-10" /><TableHead>Поставщик</TableHead><TableHead>Категории</TableHead><TableHead>Город</TableHead>
@@ -131,6 +142,7 @@ export function Directory() {
         </Table>
       </div>
       <div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>Показано {rows.length} из {items.length}</span><span>Страница 1 из 1</span></div>
+      </>}
     </>
   );
 }
@@ -159,3 +171,4 @@ function NewSupplierDialog({ onCreated }: { onCreated: (item: Supplier) => void 
     </Dialog>
   );
 }
+

@@ -15,15 +15,18 @@ type Session = { authenticated: boolean; name: string | null };
 
 export function Admin() {
   const [session, setSession] = useState<Session | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
     request<Session>("/session")
       .then((value) => { if (active) setSession(value); })
-      .catch(() => { if (active) setSession({ authenticated: false, name: null }); });
+      .catch((cause) => { if (active) setError((cause as Error).message); });
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
+  if (error) return <><PageHeader title="Настройки" /><div role="alert" className="rounded-lg border border-destructive p-4 text-sm">Не удалось проверить доступ: {error} <Button variant="outline" size="sm" onClick={() => { setError(null); setAttempt((n) => n + 1); }}>Повторить</Button></div></>;
   if (!session) return <p role="status" className="text-sm text-muted-foreground">Проверяем доступ…</p>;
 
   if (!session.authenticated) {
@@ -50,3 +53,4 @@ export function Admin() {
     </div>
   </>;
 }
+

@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type Supplier } from "@/lib/fixtures";
-import { suppliers } from "@/lib/api-client";
+import { useSuppliers } from "@/lib/use-suppliers";
 import { PageHeader, Stat, StatusBadge, ScorePill } from "@/components/app/ui-bits";
 import { meta } from "@/lib/meta";
 import { Globe, Clover } from "lucide-react";
@@ -14,8 +12,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const [items, setItems] = useState<Supplier[]>([]);
-  useEffect(() => { suppliers().then((result) => setItems(result.items)); }, []);
+  const { items, loading, error, reload } = useSuppliers();
   const active = items.filter((s) => s.status === "active").length;
   const inWork = items.filter((s) => ["contacted", "quote_requested", "quote_received", "negotiation"].includes(s.status)).length;
   const recent = [...items].sort((a, b) => b.discoveredAt.localeCompare(a.discoveredAt)).slice(0, 4);
@@ -27,6 +24,9 @@ function Dashboard() {
 
           <Button asChild><Link to="/lucky"><Clover />Подбор поставщиков</Link></Button>
         </>} />
+      {loading && <p role="status" className="mb-4 text-sm text-muted-foreground">Загружаем данные…</p>}
+      {error && <div role="alert" className="mb-4 rounded-lg border border-destructive p-4 text-sm">{error} <Button variant="outline" size="sm" onClick={reload}>Повторить</Button></div>}
+      {!loading && !error && <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Поставщиков в базе" value={items.length} />
         <Stat label="Активных" value={active} />
@@ -51,6 +51,8 @@ function Dashboard() {
         <Card><CardHeader><CardTitle className="text-base">Требуют проверки</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">{items.filter((s) => !s.verified).slice(0, 5).map((s) => <Link key={s.id} to="/suppliers/$id" params={{ id: s.id }} className="supplier-tile block rounded-md border p-3" aria-label={`Открыть карточку ${s.name}`}><span className="font-medium text-foreground">{s.name}</span><div className="text-xs text-muted-foreground">{s.sources.length} источник(ов) · сведения не подтверждены сотрудником</div></Link>)}</CardContent></Card>
       </div>
+      </>}
     </>
   );
 }
+
