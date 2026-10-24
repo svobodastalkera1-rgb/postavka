@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { getSupplier } from "../lib/fixtures";
 import { supplierSearchRank } from "../lib/supplier-search";
+import { recommend } from "../lib/recommend";
 
 test("поиск находит номер телефона и имя контактного лица", () => {
   const base = getSupplier("s1")!;
@@ -11,3 +12,11 @@ test("поиск находит номер телефона и имя конта
   expect(supplierSearchRank(supplier, "после обеда")).toBeGreaterThan(0);
   expect(supplierSearchRank(supplier, "несуществующее имя")).toBe(0);
 });
+
+test("подбор находит контакт по номеру и исключает действующих партнёров", () => {
+  const base = getSupplier("s1")!;
+  const candidate = { ...base, id: "candidate", status: "discovered" as const, workedWith: false, blacklisted: null, phone: "+7 (343) 555-12-34" };
+  const partner = { ...candidate, id: "partner", status: "active" as const };
+  expect(recommend([partner, candidate], "5551234").map((item) => item.id)).toEqual(["candidate"]);
+});
+
